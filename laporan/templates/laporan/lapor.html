@@ -1,0 +1,761 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buat Laporan - LaporYuk!</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+    <style>
+        .step-active { background-color: rgba(255, 255, 255, 0.3); color: white; border: 1px solid rgba(255, 255, 255, 0.5); transform: scale(1.1); }
+        .step-passed { background-color: white; color: #00B27A; }
+        .step-inactive { background-color: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); }
+        .animate-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 pb-24">
+    {% include 'includes/navbar.html' %}
+
+    <!-- Header & Stepper -->
+    <div class="bg-gradient-to-r from-[#009465] to-[#00B27A] pt-8 pb-12 px-6 md:px-12 rounded-b-[2.5rem] shadow-sm">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-extrabold text-white mb-2 tracking-tight">Buat Laporan Baru 📝</h1>
+            <p class="text-white/80 font-medium mb-10">Laporkan masalah di sekitarmu dalam 5 langkah mudah</p>
+
+            <div class="flex items-center justify-between relative">
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-white/20 rounded-full z-0"></div>
+                <div class="relative z-10 flex items-center bg-[#009465] px-2 py-1">
+                    <div id="step1" class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 step-inactive">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="relative z-10 flex items-center bg-[#009465] px-2 py-1">
+                    <div id="step2" class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 step-inactive">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="relative z-10 flex items-center bg-[#009465] px-2 py-1">
+                    <div id="step3" class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 step-inactive">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="relative z-10 flex items-center bg-[#009465] px-2 py-1">
+                    <div id="step4" class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 step-inactive">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="relative z-10 flex items-center bg-[#009465] px-2 py-1">
+                    <div id="step5" class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 step-inactive">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="max-w-4xl mx-auto px-6 md:px-12 mt-8">
+
+        <!-- STEP 1: PILIH KATEGORI -->
+        <div id="step1-content" class="step-content animate-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Pilih Kategori Laporan</h2>
+            <p class="text-gray-500 mb-8">Pilih kategori yang paling sesuai dengan masalah yang ingin dilaporkan</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="selectCategory('jalan')" class="category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:border-gray-200" data-id="jalan">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0 bg-orange-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">Jalan Rusak</h3>
+                        <p class="text-sm text-gray-500">Lubang, retak, aspal rusak</p>
+                    </div>
+                    <div class="check-icon absolute top-3 right-3 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center shadow-sm hidden">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </button>
+                <button onclick="selectCategory('sampah')" class="category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:border-gray-200" data-id="sampah">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0 bg-orange-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">Sampah</h3>
+                        <p class="text-sm text-gray-500">Tumpukan sampah, TPA ilegal</p>
+                    </div>
+                    <div class="check-icon absolute top-3 right-3 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center shadow-sm hidden">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </button>
+                <button onclick="selectCategory('lampu')" class="category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:border-gray-200" data-id="lampu">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0 bg-blue-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">Lampu Mati</h3>
+                        <p class="text-sm text-gray-500">PJU mati, traffic light rusak</p>
+                    </div>
+                    <div class="check-icon absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-sm hidden">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </button>
+                <button onclick="selectCategory('banjir')" class="category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:border-gray-200" data-id="banjir">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0 bg-blue-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">Banjir</h3>
+                        <p class="text-sm text-gray-500">Genangan, drainase tersumbat</p>
+                    </div>
+                    <div class="check-icon absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-sm hidden">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </button>
+                <button onclick="selectCategory('pohon')" class="category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:border-gray-200" data-id="pohon">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0 bg-green-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">Pohon Tumbang</h3>
+                        <p class="text-sm text-gray-500">Pohon roboh, dahan menggantung</p>
+                    </div>
+                    <div class="check-icon absolute top-3 right-3 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-sm hidden">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </button>
+                <button onclick="selectCategory('listrik')" class="category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:border-gray-200" data-id="listrik">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0 bg-yellow-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">Listrik/Kabel</h3>
+                        <p class="text-sm text-gray-500">Kabel menjuntai, tiang miring</p>
+                    </div>
+                    <div class="check-icon absolute top-3 right-3 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-sm hidden">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </button>
+                <button onclick="selectCategory('kebakaran')" class="category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:border-gray-200" data-id="kebakaran">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0 bg-red-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">Kebakaran</h3>
+                        <p class="text-sm text-gray-500">Titik api, bahaya kebakaran</p>
+                    </div>
+                    <div class="check-icon absolute top-3 right-3 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-sm hidden">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </button>
+                <button onclick="selectCategory('lainnya')" class="category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:border-gray-200" data-id="lainnya">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0 bg-gray-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg mb-1">Lainnya</h3>
+                        <p class="text-sm text-gray-500">Kategori tidak tercantum</p>
+                    </div>
+                    <div class="check-icon absolute top-3 right-3 w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center shadow-sm hidden">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 2: UPLOAD FOTO -->
+        <div id="step2-content" class="step-content hidden animate-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Upload Foto Bukti</h2>
+            <p class="text-gray-500 mb-8">Tambahkan foto untuk memperkuat laporanmu (maks. 5 foto)</p>
+            <label for="fotoInput" class="border-2 border-dashed border-gray-300 rounded-[2rem] p-10 flex flex-col items-center justify-center text-center bg-white hover:bg-gray-50 transition-colors cursor-pointer mb-8 group">
+                <div class="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-[#00B27A] mb-4 group-hover:scale-110 transition-transform">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Drag & drop foto di sini</h3>
+                <p class="text-gray-500 text-sm mb-6">atau klik untuk pilih dari galeri</p>
+                <div class="bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-colors shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span>Ambil Foto Langsung</span>
+                </div>
+            </label>
+            <input id="fotoInput" type="file" accept="image/*" multiple class="hidden" onchange="handleFotoChange(event)" />
+            <div id="foto-preview" class="hidden text-sm text-gray-600">File terpilih: <span id="foto-names"></span></div>
+        </div>
+
+        <!-- STEP 3: LOKASI KEJADIAN -->
+        <div id="step3-content" class="step-content hidden animate-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Tentukan Lokasi</h2>
+            <p class="text-gray-500 mb-8">Pilih titik lokasi masalah pada peta agar petugas mudah menemukan</p>
+            <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100">
+                <div class="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-4">
+                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input id="lokasi-detail" type="text" placeholder="Cari alamat atau nama jalan..." class="w-full bg-transparent border-none outline-none text-gray-700 text-sm" />
+                </div>
+                <div id="map" class="w-full h-80 bg-gray-200 rounded-2xl overflow-hidden relative border border-gray-200"></div>
+            </div>
+        </div>
+
+        <!-- STEP 4: DETAIL LAPORAN -->
+        <div id="step4-content" class="step-content hidden animate-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Detail Laporan</h2>
+            <p class="text-gray-500 mb-8">Jelaskan masalah sejelas mungkin agar cepat ditangani</p>
+            <div class="space-y-6">
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm font-bold text-gray-800">Judul Laporan <span class="text-red-500">*</span></label>
+                        <span class="text-xs text-gray-400 font-medium" id="judul-count">0/100</span>
+                    </div>
+                    <input id="judul" type="text" placeholder="Contoh: Jalan berlubang besar di depan kantor pos" class="w-full bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00B27A]/20 focus:border-[#00B27A] transition-all shadow-sm" oninput="updateCharCount('judul', 100)" />
+                </div>
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm font-bold text-gray-800">Deskripsi Lengkap <span class="text-red-500">*</span></label>
+                        <span class="text-xs text-gray-400 font-medium" id="deskripsi-count">0/500</span>
+                    </div>
+                    <textarea id="deskripsi" rows="5" placeholder="Jelaskan detail masalah: sejak kapan, seberapa parah, dampak ke warga sekitar..." class="w-full bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00B27A]/20 focus:border-[#00B27A] transition-all shadow-sm resize-none" oninput="updateCharCount('deskripsi', 500)"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-3">Tingkat Urgensi <span class="text-red-500">*</span></label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="selectUrgensi('rendah')" class="urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border bg-white border-gray-200 hover:border-gray-300 transition-all" data-id="rendah">
+                            <div class="mt-0.5 text-gray-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold mb-1 text-gray-700">Rendah</h4>
+                                <p class="text-xs text-gray-500">Tidak mendesak, bisa ditangani dalam beberapa minggu</p>
+                            </div>
+                        </button>
+                        <button onclick="selectUrgensi('sedang')" class="urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border bg-white border-yellow-200 hover:border-yellow-300 transition-all" data-id="sedang">
+                            <div class="mt-0.5 text-yellow-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold mb-1 text-yellow-500">Sedang</h4>
+                                <p class="text-xs text-gray-500">Perlu ditangani dalam beberapa hari</p>
+                            </div>
+                        </button>
+                        <button onclick="selectUrgensi('tinggi')" class="urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border bg-white border-orange-200 hover:border-orange-300 transition-all" data-id="tinggi">
+                            <div class="mt-0.5 text-orange-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold mb-1 text-orange-500">Tinggi</h4>
+                                <p class="text-xs text-gray-500">Mendesak, berpotensi bahaya jika dibiarkan</p>
+                            </div>
+                        </button>
+                        <button onclick="selectUrgensi('darurat')" class="urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border bg-red-50 border-red-200 hover:border-red-300 transition-all" data-id="darurat">
+                            <div class="mt-0.5 text-red-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold mb-1 text-red-500">Darurat</h4>
+                                <p class="text-xs text-gray-500">Sangat berbahaya, butuh penanganan segera</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800 text-sm">Lapor Secara Anonim</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">Nama kamu tidak akan ditampilkan di laporan</p>
+                        </div>
+                    </div>
+                    <button id="anonim-toggle" onclick="toggleAnonim()" class="relative w-12 h-7 rounded-full transition-colors bg-gray-300">
+                        <div class="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 5: TINJAUAN & KIRIM -->
+        <div id="step5-content" class="step-content hidden animate-in">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-[#00B27A] mx-auto mb-4 shadow-sm border border-green-200">
+                    <svg class="w-10 h-10 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Tinjau Laporanmu</h2>
+                <p class="text-gray-500">Pastikan semua data sudah benar sebelum dikirim ke instansi terkait.</p>
+            </div>
+
+            <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 divide-y divide-gray-100">
+                <div class="pb-5 flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div id="review-category-icon" class="w-12 h-12 rounded-xl flex items-center justify-center text-white bg-gray-500">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-bold mb-1 uppercase tracking-wider">Kategori</p>
+                            <h4 id="review-category-title" class="font-bold text-gray-800">Kategori belum dipilih</h4>
+                        </div>
+                    </div>
+                    <button onclick="goToStep(1)" class="text-[#00B27A] text-sm font-bold flex items-center gap-1 hover:underline">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Ubah
+                    </button>
+                </div>
+
+                <div class="py-5 flex justify-between items-start">
+                    <div>
+                        <p class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wider">Lokasi Kejadian</p>
+                        <div class="flex items-start gap-2">
+                            <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <p id="review-location" class="text-sm text-gray-700 font-medium">Lokasi belum ditentukan</p>
+                        </div>
+                    </div>
+                    <button onclick="goToStep(3)" class="text-[#00B27A] text-sm font-bold flex items-center gap-1 hover:underline shrink-0 ml-4">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Ubah
+                    </button>
+                </div>
+
+                <div class="py-5">
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Detail Masalah</p>
+                        <button onclick="goToStep(4)" class="text-[#00B27A] text-sm font-bold flex items-center gap-1 hover:underline">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            Ubah
+                        </button>
+                    </div>
+                    <h4 id="review-judul" class="font-bold text-gray-800 text-lg mb-2">Judul belum diisi</h4>
+                    <p id="review-deskripsi" class="text-sm text-gray-600 leading-relaxed mb-4">Deskripsi belum diisi</p>
+                    <div class="flex gap-2">
+                        <span id="review-urgensi" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Tingkat Urgensi: Belum dipilih
+                        </span>
+                        <span id="review-anonim" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold border border-gray-200 flex items-center gap-1 hidden">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                            Identitas Anonim
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 md:px-12 z-40">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <button onclick="handleBack()" class="px-5 py-3 text-gray-500 font-semibold rounded-xl hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <span class="hidden sm:inline">Kembali</span>
+            </button>
+
+            <div class="hidden md:flex gap-2">
+                <div id="dot1" class="w-2.5 h-2.5 rounded-full bg-[#00B27A] w-6"></div>
+                <div id="dot2" class="w-2.5 h-2.5 rounded-full bg-gray-200"></div>
+                <div id="dot3" class="w-2.5 h-2.5 rounded-full bg-gray-200"></div>
+                <div id="dot4" class="w-2.5 h-2.5 rounded-full bg-gray-200"></div>
+                <div id="dot5" class="w-2.5 h-2.5 rounded-full bg-gray-200"></div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="skip-btn" onclick="handleNext()" class="px-5 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors flex items-center gap-1 hidden">
+                    Lewati 
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+                <button id="next-btn" onclick="handleNext()" class="px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm bg-[#00B27A] hover:bg-[#009968] text-white shadow-md">
+                    Lanjutkan 
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let selectedCategory = '';
+        let selectedUrgensi = '';
+        let isAnonim = false;
+        let selectedLocation = null;
+        let selectedFoto = null;
+        let map = null;
+        let marker = null;
+
+        function updateStepper() {
+            for (let i = 1; i <= 5; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                const dotEl = document.getElementById(`dot${i}`);
+                if (i === currentStep) {
+                    stepEl.className = 'w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 step-active';
+                    dotEl.className = 'w-2.5 h-2.5 rounded-full bg-[#00B27A] w-6';
+                } else if (i < currentStep) {
+                    stepEl.className = 'w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 step-passed';
+                    dotEl.className = 'w-2.5 h-2.5 rounded-full bg-gray-200';
+                } else {
+                    stepEl.className = 'w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 step-inactive';
+                    dotEl.className = 'w-2.5 h-2.5 rounded-full bg-gray-200';
+                }
+            }
+        }
+
+        function showStep(step) {
+            for (let i = 1; i <= 5; i++) {
+                const content = document.getElementById(`step${i}-content`);
+                if (i === step) {
+                    content.classList.remove('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+            }
+            updateStepper();
+            updateButtons();
+            if (step === 5) {
+                updateReviewStep();
+            }
+        }
+
+        function updateButtons() {
+            const nextBtn = document.getElementById('next-btn');
+            const skipBtn = document.getElementById('skip-btn');
+            
+            if (currentStep === 1) {
+                nextBtn.disabled = !selectedCategory;
+                nextBtn.className = selectedCategory ? 'px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm bg-[#00B27A] hover:bg-[#009968] text-white shadow-md' : 'px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm bg-gray-200 text-gray-400 cursor-not-allowed';
+                nextBtn.innerHTML = 'Lanjutkan <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                skipBtn.classList.add('hidden');
+            } else if (currentStep === 2) {
+                nextBtn.innerHTML = 'Lanjutkan <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                skipBtn.classList.remove('hidden');
+            } else if (currentStep === 4) {
+                nextBtn.innerHTML = 'Tinjau Laporan';
+            } else if (currentStep === 5) {
+                nextBtn.innerHTML = 'Kirim Laporan';
+            } else {
+                nextBtn.innerHTML = 'Lanjutkan <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                skipBtn.classList.add('hidden');
+            }
+        }
+
+        function selectCategory(id) {
+            selectedCategory = id;
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => {
+                const checkIcon = btn.querySelector('.check-icon');
+                if (btn.dataset.id === id) {
+                    btn.className = 'category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-orange-500 bg-orange-50/50 shadow-md';
+                    checkIcon.classList.remove('hidden');
+                } else {
+                    btn.className = 'category-btn relative flex items-center gap-4 p-5 rounded-2xl text-left transition-all border-2 border-transparent bg-white shadow-sm hover:shadow-md hover:border-gray-200';
+                    checkIcon.classList.add('hidden');
+                }
+            });
+            updateButtons();
+        }
+
+        function selectUrgensi(id) {
+            selectedUrgensi = id;
+            const buttons = document.querySelectorAll('.urgensi-btn');
+            buttons.forEach(btn => {
+                if (btn.dataset.id === id) {
+                    btn.className = `urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border transition-all ${id === 'darurat' ? 'bg-red-50 border-red-500' : id === 'tinggi' ? 'bg-orange-50/50 border-orange-400' : id === 'sedang' ? 'bg-yellow-50/50 border-yellow-400' : 'bg-gray-50 border-gray-400'}`;
+                } else {
+                    btn.className = 'urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border bg-white border-gray-200 hover:border-gray-300 transition-all';
+                }
+            });
+        }
+
+        function toggleAnonim() {
+            isAnonim = !isAnonim;
+            const toggle = document.getElementById('anonim-toggle');
+            const toggleBtn = toggle.querySelector('div');
+            if (isAnonim) {
+                toggle.className = 'relative w-12 h-7 rounded-full transition-colors bg-[#00B27A]';
+                toggleBtn.className = 'absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform translate-x-5';
+            } else {
+                toggle.className = 'relative w-12 h-7 rounded-full transition-colors bg-gray-300';
+                toggleBtn.className = 'absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform';
+            }
+        }
+
+        function handleFotoChange(event) {
+            selectedFoto = event.target.files;
+            const preview = document.getElementById('foto-preview');
+            const names = document.getElementById('foto-names');
+            if (selectedFoto && selectedFoto.length > 0) {
+                names.textContent = Array.from(selectedFoto).map(f => f.name).join(', ');
+                preview.classList.remove('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+
+        function updateCharCount(fieldId, max) {
+            const field = document.getElementById(fieldId);
+            const countEl = document.getElementById(`${fieldId}-count`);
+            const count = field.value.length;
+            countEl.textContent = `${count}/${max}`;
+        }
+
+        function handleNext() {
+            if (currentStep < 5) {
+                currentStep++;
+                showStep(currentStep);
+                if (currentStep === 5) {
+                    updateReviewStep();
+                }
+            } else {
+                submitLaporan();
+            }
+        }
+
+        function handleBack() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            } else {
+                window.location.href = '/';
+            }
+        }
+
+        function goToStep(step) {
+            currentStep = step;
+            showStep(step);
+            if (step === 5) {
+                updateReviewStep();
+                updateReviewStep();
+            }
+        }
+
+        function updateReviewStep() {
+            console.log('updateReviewStep called');
+            // Debug: print state values to console
+            console.log('updateReviewStep:', {
+                selectedCategory,
+                selectedUrgensi,
+                selectedLocation,
+                isAnonim,
+                judulValue: document.getElementById('judul') ? document.getElementById('judul').value : null,
+                deskripsiValue: document.getElementById('deskripsi') ? document.getElementById('deskripsi').value : null,
+                lokasiDetailValue: document.getElementById('lokasi-detail') ? document.getElementById('lokasi-detail').value : null
+            });
+            // Data kategori mapping
+            const categoryData = {
+                'jalan': { title: 'Jalan Rusak', color: 'bg-orange-500' },
+                'sampah': { title: 'Sampah', color: 'bg-orange-500' },
+                'lampu': { title: 'Lampu Mati', color: 'bg-blue-500' },
+                'banjir': { title: 'Banjir', color: 'bg-blue-500' },
+                'pohon': { title: 'Pohon Tumbang', color: 'bg-green-500' },
+                'listrik': { title: 'Listrik/Kabel', color: 'bg-yellow-500' },
+                'kebakaran': { title: 'Kebakaran', color: 'bg-red-500' },
+                'lainnya': { title: 'Lainnya', color: 'bg-gray-500' }
+            };
+            const categoryValue = selectedCategory || (document.getElementById('selected-category-input') ? document.getElementById('selected-category-input').value : null) || (document.querySelector('input[name="kategori"]:checked') ? document.querySelector('input[name="kategori"]:checked').value : null) || (document.querySelector('[data-category].selected') ? document.querySelector('[data-category].selected').dataset.category : null) || (document.querySelector('.category-button.selected') ? document.querySelector('.category-button.selected').dataset.category : null) || (document.querySelector('.category-card.selected') ? document.querySelector('.category-card.selected').dataset.category : null);
+            console.log('categoryValue', categoryValue);
+
+            // Update kategori review
+            if (categoryValue && categoryData[categoryValue]) {
+                const catData = categoryData[categoryValue];
+                const categoryTitleEl = document.getElementById('review-category-title') || document.querySelector('.review-category-title');
+                console.log('categoryTitleEl', categoryTitleEl);
+                const categoryIconEl = document.getElementById('review-category-icon') || document.querySelector('.review-category-icon');
+                if (categoryTitleEl) {
+                    categoryTitleEl.textContent = catData.title;
+                }
+                if (categoryIconEl) {
+                    categoryIconEl.className = `w-12 h-12 rounded-xl flex items-center justify-center text-white ${catData.color}`;
+                }
+            }
+
+            // Update lokasi review
+            const lokasiDetailEl = document.getElementById('lokasi-detail');
+            const reviewLokasiEl = document.getElementById('review-location') || document.querySelector('.review-location');
+            if (reviewLokasiEl) {
+                if (selectedLocation) {
+                    const lokasiText = (lokasiDetailEl && lokasiDetailEl.value) || `Koordinat: ${selectedLocation.lat.toFixed(4)}, ${selectedLocation.lng.toFixed(4)}`;
+                    reviewLokasiEl.textContent = lokasiText;
+                } else {
+                    const lokasiText = (lokasiDetailEl && lokasiDetailEl.value) || 'Lokasi belum ditentukan';
+                    reviewLokasiEl.textContent = lokasiText;
+                }
+            }
+
+            // Update judul review
+            const judulEl = document.getElementById('judul');
+            const reviewJudulEl = document.getElementById('review-judul') || document.querySelector('.review-judul');
+            if (reviewJudulEl) {
+                reviewJudulEl.textContent = (judulEl && judulEl.value) || 'Judul belum diisi';
+            }
+
+            // Update deskripsi review
+            const deskripsiEl = document.getElementById('deskripsi');
+            const reviewDeskripsiEl = document.getElementById('review-deskripsi') || document.querySelector('.review-deskripsi');
+            if (reviewDeskripsiEl) {
+                reviewDeskripsiEl.textContent = (deskripsiEl && deskripsiEl.value) || 'Deskripsi belum diisi';
+            }
+
+            // Update urgensi review
+            const selectedUrgensiValue = selectedUrgensi || (document.getElementById('selected-urgensi-input') ? document.getElementById('selected-urgensi-input').value : null);
+            const reviewUrgensiEl = document.getElementById('review-urgensi') || document.querySelector('.review-urgensi');
+            if (selectedUrgensiValue && reviewUrgensiEl) {
+                const urgensiText = selectedUrgensiValue.charAt(0).toUpperCase() + selectedUrgensiValue.slice(1);
+                reviewUrgensiEl.innerHTML = `
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Tingkat Urgensi: ${urgensiText}
+                `;
+            }
+
+            // Update anonim review
+            const reviewAnonimEl = document.getElementById('review-anonim') || document.querySelector('.review-anonim');
+            console.log('reviewAnonimEl', reviewAnonimEl);
+            if (reviewAnonimEl) {
+                if (isAnonim) {
+                    reviewAnonimEl.classList.remove('hidden');
+                } else {
+                    reviewAnonimEl.classList.add('hidden');
+                }
+            }
+        }
+
+        function submitLaporan() {
+            const formData = new FormData();
+            formData.append('judul', document.getElementById('judul').value);
+            formData.append('deskripsi', document.getElementById('deskripsi').value);
+            formData.append('kategori', selectedCategory);
+            formData.append('urgensi', selectedUrgensi);
+            formData.append('lokasi_detail', document.getElementById('lokasi-detail').value);
+            if (selectedLocation) {
+                formData.append('latitude', selectedLocation.lat);
+                formData.append('longitude', selectedLocation.lng);
+            }
+            if (selectedFoto) {
+                for (let i = 0; i < selectedFoto.length; i++) {
+                    formData.append('gambar', selectedFoto[i]);
+                }
+            }
+            formData.append('is_anonim', isAnonim);
+
+            fetch('/api/pengaduan/', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json().then(data => ({ ok: response.ok, status: response.status, data })))
+            .then(result => {
+                console.log('submitLaporan result', result);
+                if (result.ok && result.data.success) {
+                    alert('Hore! Laporan berhasil terkirim!');
+                    window.location.href = '/riwayat';
+                } else {
+                    const message = result.data && result.data.message ? result.data.message : 'Terjadi kesalahan saat mengirim laporan.';
+                    alert(`Gagal mengirim laporan: ${message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat mengirim laporan.');
+            });
+        }
+
+        // Initialize map
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('map')) {
+                map = L.map('map').setView([-6.175392, 106.827153], 15);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+                
+                map.on('click', function(e) {
+                    if (marker) {
+                        map.removeLayer(marker);
+                    }
+                    marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+                    selectedLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
+                });
+            }
+            updateStepper();
+        });
+    </script>
+</body>
+</html></content>
