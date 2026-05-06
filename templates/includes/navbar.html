@@ -9,9 +9,9 @@
 
             <div class="hidden md:flex items-center gap-1 bg-gray-50 p-1 rounded-full border border-gray-200/60">
                 <a href="/" class="px-5 py-1.5 text-xs font-semibold {% if request.resolver_match.url_name == 'beranda' %}text-emerald-600 bg-white rounded-full shadow-sm{% else %}text-gray-500 rounded-full hover:text-gray-900 transition{% endif %}">Beranda</a>
-                <a href="#" class="px-5 py-1.5 text-xs font-semibold text-gray-500 rounded-full hover:text-gray-900 transition">Peta</a>
+                <a href="/peta/" class="px-5 py-1.5 text-xs font-semibold {% if request.resolver_match.url_name == 'peta' %}text-emerald-600 bg-white rounded-full shadow-sm{% else %}text-gray-500 rounded-full hover:text-gray-900 transition{% endif %}">Peta</a>
                 <a href="/riwayat/" class="px-5 py-1.5 text-xs font-semibold {% if request.resolver_match.url_name == 'riwayat' %}text-emerald-600 bg-white rounded-full shadow-sm{% else %}text-gray-500 rounded-full hover:text-gray-900 transition{% endif %}">Riwayat</a>
-                <a href="#" class="px-5 py-1.5 text-xs font-semibold text-gray-500 rounded-full hover:text-gray-900 transition">Profil</a>
+                <a href="/profil/" class="px-5 py-1.5 text-xs font-semibold {% if request.resolver_match.url_name == 'profil' %}text-emerald-600 bg-white rounded-full shadow-sm{% else %}text-gray-500 rounded-full hover:text-gray-900 transition{% endif %}">Profil</a>
             </div>
 
             <div class="flex items-center gap-3">
@@ -35,11 +35,11 @@
                     <span>Lapor</span>
                 </a>
 
-                <div class="flex items-center gap-2 pl-2 border-l border-gray-100">
+                <a href="/profil/" class="flex items-center gap-2 pl-2 border-l border-gray-100 hover:opacity-80 transition">
                     <div class="w-8 h-8 flex items-center justify-center bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-full text-xs font-bold">
                         BS
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>

@@ -1,11 +1,44 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg
 from .models import Pengaduan
 import json
 
 def beranda_view(request):
-    return render(request, 'laporan/beranda.html')
+    kategori_filter = request.GET.get('kategori', '')
+    
+    # Get all laporan
+    laporan_list = Pengaduan.objects.all().order_by('-created_at')
+    
+    # Filter by kategori if provided
+    if kategori_filter and kategori_filter != 'semua':
+        laporan_list = laporan_list.filter(kategori=kategori_filter)
+    
+    # Get 4 latest laporan for display
+    laporan_terbaru = laporan_list[:4]
+    
+    # Calculate statistics
+    total_laporan = Pengaduan.objects.count()
+    jumlah_diproses = Pengaduan.objects.filter(status='diproses').count()
+    jumlah_selesai = Pengaduan.objects.filter(status='selesai').count()
+    
+    # Calculate average satisfaction rating
+    avg_rating = Pengaduan.objects.filter(rating__isnull=False).aggregate(Avg('rating'))['rating__avg']
+    tingkat_kepuasan = round((avg_rating / 5 * 100)) if avg_rating else 0
+    
+    # Kategori choices
+    kategori_choices = Pengaduan.KATEGORI_CHOICES
+    
+    return render(request, 'laporan/beranda.html', {
+        'laporan_terbaru': laporan_terbaru,
+        'total_laporan': total_laporan,
+        'jumlah_diproses': jumlah_diproses,
+        'jumlah_selesai': jumlah_selesai,
+        'kategori_choices': kategori_choices,
+        'kategori_filter': kategori_filter,
+        'tingkat_kepuasan': tingkat_kepuasan,
+    })
 
 def lapor_view(request):
     return render(request, 'laporan/lapor.html')

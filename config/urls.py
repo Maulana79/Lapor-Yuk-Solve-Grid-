@@ -22,7 +22,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')), # Menghubungkan URL users
-    path('', include('laporan.urls')),
+    path('', include('laporan.urls')), # Menghubungkan URL laporan
+    path('', include('peta.urls')), # Menghubungkan URL peta
+    path('profil/', include('profil.urls')), # Menghubungkan URL profil
 ]
 
 if settings.DEBUG:

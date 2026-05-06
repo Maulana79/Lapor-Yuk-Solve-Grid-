@@ -1,0 +1,256 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map - LaporYuk!</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="icon" href="{% static 'images/LaporYuk.svg' %}">
+    <style>
+        .leaflet-container { width: 100%; height: 100%; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-icon div { box-shadow: 0 2px 5px rgba(0,0,0,0.25); }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100 font-sans text-gray-900">
+    {% include 'includes/navbar.html' %}
+
+    <main class="relative w-full" style="height: calc(100vh - 70px);">
+        <div id="map" class="absolute inset-0 z-0"></div>
+
+        <div class="absolute top-6 left-6 z-10">
+            <button class="bg-white p-3 rounded-xl shadow-md text-gray-700 hover:text-[#00B27A] transition-colors" type="button" aria-label="Layer kontrol">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l6 3-6 3V7zm7 0l6 3-6 3V7zm7 0l6 3-6 3V7z" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="absolute top-6 right-6 z-10 flex flex-col gap-3">
+            <div class="bg-white rounded-xl shadow-md flex flex-col overflow-hidden">
+                <button id="zoom-in" class="p-3 text-gray-700 hover:bg-gray-50 transition-colors" type="button" aria-label="Zoom in">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                </button>
+                <button id="zoom-out" class="p-3 text-gray-700 hover:bg-gray-50 transition-colors" type="button" aria-label="Zoom out">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                </button>
+            </div>
+            <button id="locate-btn" class="bg-white p-3 rounded-xl shadow-md text-gray-700 hover:text-[#00B27A] transition-colors" type="button" aria-label="Center map">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 0v4m0-4h4m-4 0H8m12-2a9.956 9.956 0 01-4.316 8.316M4 12c0-2.761 1.12-5.26 2.928-7.071M12 4c2.761 0 5.26 1.12 7.071 2.928M20 12c0 2.761-1.12 5.26-2.928 7.071M12 20c-2.761 0-5.26-1.12-7.071-2.928"/></svg>
+            </button>
+        </div>
+
+        <div class="absolute bottom-8 right-6 z-10">
+            <button class="bg-white px-5 py-3 rounded-xl shadow-md text-gray-700 font-bold text-sm flex items-center gap-2 hover:bg-gray-50 transition-colors" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9zm0 4a1 1 0 011 1v2h2a1 1 0 110 2h-2v2a1 1 0 11-2 0v-2H9a1 1 0 110-2h2V8a1 1 0 011-1z"/></svg>
+                Heatmap
+            </button>
+        </div>
+
+        <div class="absolute bottom-8 left-6 md:left-[420px] z-10 transition-all duration-300">
+            <div class="bg-white p-5 rounded-2xl shadow-md w-64">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-bold text-gray-800 text-sm">Keterangan</h4>
+                    <button id="legend-close" class="text-gray-400 hover:text-gray-600" type="button" aria-label="Close legend">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="space-y-3 text-sm text-gray-600 font-medium">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white shadow-sm shrink-0"></span>
+                        Menunggu Ditangani
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="w-3.5 h-3.5 bg-yellow-500 rounded-full border-2 border-white shadow-sm shrink-0"></span>
+                        Sedang Diproses
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white shadow-sm shrink-0"></span>
+                        Selesai Diperbaiki
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <aside id="sidebar" class="absolute top-0 left-0 h-full w-full md:w-[400px] bg-white shadow-2xl z-20 flex flex-col transition-transform duration-300">
+            <div class="p-6 border-b border-gray-100 shrink-0">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">Laporan Terkini</h2>
+                        <p class="text-sm text-gray-500" id="report-count">{{ total_laporan }} laporan ditemukan</p>
+                    </div>
+                    <button id="sidebar-close" class="bg-gray-100 p-2 rounded-full text-gray-500 hover:bg-gray-200 transition-colors md:hidden" type="button" aria-label="Close sidebar">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input id="search-input" type="text" placeholder="Cari lokasi atau jenis laporan..." class="w-full bg-transparent border-none outline-none text-gray-700 text-sm" />
+                </div>
+                <div id="filter-container" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"></div>
+            </div>
+            <div id="report-list" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50"></div>
+        </aside>
+
+        <button id="sidebar-open" class="absolute top-6 left-6 z-10 bg-[#00B27A] text-white p-3 rounded-xl shadow-lg flex items-center gap-2 font-bold text-sm hidden" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Cari Laporan
+        </button>
+    </main>
+
+    <script>
+        const laporanData = {{ laporan_json|safe }};
+
+        const centerPosition = [-6.175392, 106.827153];
+        const map = L.map('map', { center: centerPosition, zoom: 14, zoomControl: false });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/">CartoDB</a>'
+        }).addTo(map);
+
+        const iconFactory = (color) => L.divIcon({
+            className: 'custom-icon',
+            html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white;"></div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13],
+        });
+
+        const icons = {
+            menunggu: iconFactory('#ef4444'),
+            diproses: iconFactory('#f59e0b'),
+            selesai: iconFactory('#10b981'),
+        };
+
+        const markers = laporanData.map((laporan) => {
+            const marker = L.marker(laporan.position, { icon: icons[laporan.statusId] }).addTo(map);
+            marker.bindPopup(`
+                <div class="text-center p-1">
+                    <h4 class="font-bold text-gray-800 text-sm mb-1">${laporan.judul}</h4>
+                    <span class="text-xs font-bold ${laporan.statusColor}">${laporan.status}</span>
+                </div>
+            `);
+            laporan.marker = marker;
+            return marker;
+        });
+
+        const reportList = document.getElementById('report-list');
+        const reportCount = document.getElementById('report-count');
+        const filterContainer = document.getElementById('filter-container');
+        const searchInput = document.getElementById('search-input');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarClose = document.getElementById('sidebar-close');
+        const sidebarOpen = document.getElementById('sidebar-open');
+        const zoomIn = document.getElementById('zoom-in');
+        const zoomOut = document.getElementById('zoom-out');
+        const locateBtn = document.getElementById('locate-btn');
+        const legendClose = document.getElementById('legend-close');
+
+        let activeFilter = 'Semua';
+
+        // Generate filter buttons dynamically from unique kategori
+        const uniqueKategori = ['Semua', ...new Set(laporanData.map(item => item.kategori))];
+        filterContainer.innerHTML = uniqueKategori.map((kategori, index) => `
+            <button class="filter-btn whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold border transition-all ${index === 0 ? 'bg-[#00B27A] text-white border-[#00B27A]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}" type="button" data-filter="${kategori}">${kategori}</button>
+        `).join('');
+
+        const filterButtons = document.querySelectorAll('.filter-btn');
+
+        const renderReports = () => {
+            const query = searchInput.value.trim().toLowerCase();
+            const visibleReports = laporanData.filter((item) => {
+                const matchesFilter = activeFilter === 'Semua' || item.kategori === activeFilter;
+                const matchesSearch = query === '' || item.judul.toLowerCase().includes(query) || item.kategori.toLowerCase().includes(query);
+                return matchesFilter && matchesSearch;
+            });
+
+            reportCount.textContent = `${visibleReports.length} laporan ditemukan`;
+            reportList.innerHTML = visibleReports.map((item) => `
+                <div class="report-card bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex gap-4 hover:border-[#00B27A]/30 transition-colors cursor-pointer group" data-id="${item.id}">
+                    <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0">
+                        <img src="${item.image}" alt="${item.judul}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start mb-1.5">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full ${item.dotColor}"></span>
+                                <span class="text-[10px] font-bold ${item.statusColor} uppercase tracking-wider">${item.status}</span>
+                            </div>
+                            <span class="text-[10px] text-gray-400 font-semibold">${item.waktu}</span>
+                        </div>
+                        <h3 class="font-bold text-gray-800 text-sm leading-snug mb-2" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${item.judul}</h3>
+                        <div class="flex items-center justify-between mt-auto">
+                            <div class="flex items-center gap-1 text-gray-500 text-xs font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm0 0v7m0 0l-3-3m3 3l3-3"/></svg>
+                                ${item.jarak}
+                            </div>
+                            <div class="flex items-center gap-3 text-gray-400">
+                                <div class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.682 4.318 12.682a4.5 4.5 0 010-6.364z"/></svg><span class="text-[10px] font-bold">${item.likes}</span></div>
+                                <div class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.937L3 20l.937-4.255A9.863 9.863 0 013 12c0-4.97 3.582-9 8-9s9 4.03 9 9z"/></svg><span class="text-[10px] font-bold">${item.comments}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`).join('');
+
+            document.querySelectorAll('.report-card').forEach((card) => {
+                card.addEventListener('click', () => {
+                    const reportId = Number(card.getAttribute('data-id'));
+                    const report = laporanData.find((item) => item.id === reportId);
+                    if (report) {
+                        map.flyTo(report.position, 16, { duration: 0.8 });
+                        report.marker.openPopup();
+                    }
+                });
+            });
+
+            laporanData.forEach((item) => {
+                const matchesFilter = activeFilter === 'Semua' || item.kategori === activeFilter;
+                const matchesSearch = query === '' || item.judul.toLowerCase().includes(query) || item.kategori.toLowerCase().includes(query);
+                if (matchesFilter && matchesSearch) {
+                    item.marker.addTo(map);
+                } else {
+                    map.removeLayer(item.marker);
+                }
+            });
+        };
+
+        filterButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                activeFilter = button.dataset.filter;
+                filterButtons.forEach((btn) => {
+                    btn.classList.toggle('bg-[#00B27A]', btn === button);
+                    btn.classList.toggle('text-white', btn === button);
+                    btn.classList.toggle('border-[#00B27A]', btn === button);
+                    btn.classList.toggle('bg-white', btn !== button);
+                    btn.classList.toggle('text-gray-600', btn !== button);
+                });
+                renderReports();
+            });
+        });
+
+        searchInput.addEventListener('input', renderReports);
+
+        sidebarClose.addEventListener('click', () => {
+            sidebar.style.transform = 'translateX(-100%)';
+            sidebarOpen.classList.remove('hidden');
+        });
+
+        sidebarOpen.addEventListener('click', () => {
+            sidebar.style.transform = 'translateX(0)';
+            sidebarOpen.classList.add('hidden');
+        });
+
+        zoomIn.addEventListener('click', () => map.zoomIn());
+        zoomOut.addEventListener('click', () => map.zoomOut());
+        locateBtn.addEventListener('click', () => map.setView(centerPosition, 14));
+        legendClose.addEventListener('click', () => {
+            const legendPanel = document.getElementById('legend-panel');
+            if (legendPanel) legendPanel.remove();
+        });
+
+        renderReports();
+    </script>
+</body>
+</html>
