@@ -1,30 +1,30 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
+from profil.models import Profile
 
 # --- VIEW UNTUK REGISTER ---
 def register_view(request):
     if request.method == 'POST':
-        # 1. Tangkap data dari atribut 'name' di HTML
         nama = request.POST.get('name')
-        username = request.POST.get('email') or request.POST.get('username')
+        nik = request.POST.get('nik')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
         password = request.POST.get('password')
         konfirmasi = request.POST.get('confirm_password')
 
-        # 2. Validasi Password
         if password == konfirmasi:
-            # Cek apakah email/NIK sudah dipakai
-            if User.objects.filter(username=username).exists():
-                messages.error(request, 'Email atau NIK sudah terdaftar!')
+            if User.objects.filter(username=nik).exists() or User.objects.filter(email=email).exists():
+                messages.error(request, 'NIK atau email sudah terdaftar!')
             else:
-                # 3. Simpan ke Database
-                user = User.objects.create_user(username=username, password=password, first_name=nama)
+                user = User.objects.create_user(username=nik, email=email, password=password, first_name=nama)
                 user.save()
-                
-                # 4. Langsung login-kan dan arahkan ke beranda
+                Profile.objects.create(user=user, phone=phone)
                 login(request, user)
-                return redirect('beranda') # Sesuaikan dengan name url beranda kamu
+                return redirect('beranda')
         else:
             messages.error(request, 'Password dan Konfirmasi tidak cocok!')
 
@@ -33,18 +33,23 @@ def register_view(request):
 # --- VIEW UNTUK LOGIN ---
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
+        login_value = request.POST.get('username')
         password = request.POST.get('password')
+        username = login_value
 
-        # 1. Cek kecocokan di database
+        if login_value and '@' in login_value:
+            try:
+                user_by_email = User.objects.get(email__iexact=login_value)
+                username = user_by_email.username
+            except User.DoesNotExist:
+                username = login_value
+
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            # 2. Jika cocok, buat sesi login
             login(request, user)
-            return redirect('beranda') # Sesuaikan dengan name url beranda kamu
+            return redirect('beranda')
         else:
-            # 3. Jika salah, tolak
             messages.error(request, 'Email/NIK atau Password salah!')
 
     return render(request, 'users/login.html')
@@ -53,3 +58,28 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+@login_required(login_url='/login/')
+def change_password_view(request):
+    success_message = None
+    error_message = None
+
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if not request.user.check_password(current_password):
+            error_message = 'Password saat ini tidak cocok.'
+        elif not new_password or new_password != confirm_password:
+            error_message = 'Password baru dan konfirmasi harus sama.'
+        else:
+            request.user.set_password(new_password)
+            request.user.save()
+            update_session_auth_hash(request, request.user)
+            success_message = 'Password berhasil diperbarui.'
+
+    return render(request, 'users/password_change.html', {
+        'success_message': success_message,
+        'error_message': error_message,
+    })
