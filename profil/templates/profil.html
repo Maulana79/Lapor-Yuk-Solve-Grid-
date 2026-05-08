@@ -16,6 +16,17 @@
 
     {% include 'includes/navbar.html' %}
 
+    {% if success_message %}
+        <div id="success-toast" class="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 shadow-lg shadow-emerald-200/40">
+            <div class="flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                </svg>
+                <span>{{ success_message }}</span>
+            </div>
+        </div>
+    {% endif %}
+
     <div class="h-48 md:h-64 w-full relative">
         <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&q=80&w=1200" alt="Cover" class="w-full h-full object-cover" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
@@ -32,7 +43,11 @@
             <div class="flex flex-col items-center text-center">
                 <div class="relative -mt-16 md:-mt-20 mb-3">
                     <div class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
-                        <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200" alt="Budi Santoso" class="w-full h-full object-cover" />
+                        {% if profile.photo %}
+                        <img src="{{ profile.photo.url }}" alt="{{ profile_name }}" class="w-full h-full object-cover" />
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200" alt="{{ profile_name }}" class="w-full h-full object-cover" />
+                        {% endif %}
                     </div>
                     <div class="absolute bottom-1 right-1 w-6 h-6 bg-[#00B27A] border-2 border-white rounded-full flex items-center justify-center shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,7 +56,7 @@
                     </div>
                 </div>
 
-                <h1 class="text-2xl md:text-3xl font-extrabold text-gray-800">Budi Santoso</h1>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-gray-800">{{ profile_name }}</h1>
                 <div class="flex items-center justify-center gap-2 mt-2">
                     <span class="bg-green-50 text-[#00B27A] px-3 py-1 rounded-full text-xs font-bold border border-green-100 flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,48 +67,88 @@
                 </div>
 
                 <p class="text-gray-500 text-sm font-medium mt-3 flex items-center justify-center gap-4 flex-wrap">
-                    <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Kec. Menteng, Jakarta Pusat</span>
+                    <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> {{ profile_location }}</span>
                     <span class="hidden sm:inline text-gray-300">•</span>
-                    <span>Bergabung Januari 2025</span>
+                    <span>Bergabung {{ joined_date }}</span>
                 </p>
             </div>
 
             <div class="mt-8 mb-6">
                 <div class="flex justify-between items-end mb-2">
                     <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Poin Kontribusi</span>
-                    <span class="text-sm font-bold text-[#00B27A]">720 / 1000 XP</span>
+                    <span class="text-sm font-bold text-[#00B27A]">{{ points }} / {{ goal_points }} XP</span>
                 </div>
                 <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div class="h-full bg-[#00B27A] rounded-full w-[72%] transition-all duration-1000"></div>
+                    <div class="h-full bg-[#00B27A] rounded-full transition-all duration-1000" style="width: {{ progress_percent }}%;"></div>
                 </div>
             </div>
 
             <div class="h-px w-full bg-gray-100 my-6"></div>
 
             <div class="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-gray-600 font-medium mb-6">
-                <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> budi.santoso@email.com</div>
-                <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> +62 812-3456-7890</div>
-                <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg> NIK: 3171•••••••0001</div>
+                <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> {{ email_display }}</div>
+                <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> {{ profile_phone }}</div>
+                <div class="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg> NIK: {{ nik_display }}</div>
             </div>
 
             <div class="grid grid-cols-4 gap-2 md:gap-4 text-center">
                 <div class="flex flex-col items-center">
-                    <span class="text-2xl font-bold text-[#00B27A]">14</span>
+                    <span class="text-2xl font-bold text-[#00B27A]">{{ total_reports }}</span>
                     <span class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Laporan</span>
                 </div>
                 <div class="flex flex-col items-center border-l border-gray-100">
-                    <span class="text-2xl font-bold text-[#00B27A]">9</span>
+                    <span class="text-2xl font-bold text-[#00B27A]">{{ completed_reports }}</span>
                     <span class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Selesai</span>
                 </div>
                 <div class="flex flex-col items-center border-l border-gray-100">
-                    <span class="text-2xl font-bold text-red-500">186</span>
+                    <span class="text-2xl font-bold text-red-500">{{ support_reports }}</span>
                     <span class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Dukungan</span>
                 </div>
                 <div class="flex flex-col items-center border-l border-gray-100">
-                    <span class="text-2xl font-bold text-orange-500">#12</span>
+                    <span class="text-2xl font-bold text-orange-500">{{ rank_display }}</span>
                     <span class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase">Peringkat</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 md:px-8 mt-8"></div>
+
+    <div id="profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 p-4">
+        <div class="w-full max-w-xl rounded-[2rem] bg-white p-6 md:p-8 shadow-2xl relative">
+            <button id="profile-modal-close" type="button" class="absolute top-4 right-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
+                <span class="sr-only">Tutup</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 18 12-12m0 12L6 6"/></svg>
+            </button>
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Edit Profil</h2>
+                <p class="text-sm text-gray-500 mt-2">Perbarui foto, telepon, dan lokasi Anda.</p>
+            </div>
+            <form method="post" enctype="multipart/form-data" class="grid gap-4">
+                {% csrf_token %}
+                {% if profile.photo %}
+                <div class="flex items-center gap-4">
+                    <img src="{{ profile.photo.url }}" alt="Foto Profil" class="w-20 h-20 rounded-full object-cover border border-gray-200" />
+                    <div>
+                        <p class="text-sm font-semibold text-gray-700">Foto saat ini</p>
+                        <p class="text-xs text-gray-500">Unggah foto baru untuk menggantinya.</p>
+                    </div>
+                </div>
+                {% endif %}
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2" for="id_photo">Foto Profil</label>
+                    {{ profile_form.photo }}
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2" for="id_phone">Telepon</label>
+                    {{ profile_form.phone }}
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2" for="id_location">Lokasi</label>
+                    {{ profile_form.location }}
+                </div>
+                <button type="submit" class="w-full rounded-2xl bg-[#00B27A] px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition">Simpan Profil</button>
+            </form>
         </div>
     </div>
 
@@ -101,16 +156,27 @@
         <div>
             <h2 class="text-lg font-bold text-gray-800 mb-4 px-2">Menu</h2>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-                <button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <button id="menu-account-settings" type="button" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-500 border border-gray-100"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.574 1.07c.821-.426 1.811.351 1.543 1.27a1.724 1.724 0 001.018 2.143c.936.39 1.287 1.651.5 2.385a1.724 1.724 0 00-.386 1.943c.278.859-.53 1.663-1.424 1.4a1.724 1.724 0 00-2.106 1.113c-.25.923-1.603.923-1.902 0a1.724 1.724 0 00-2.574-1.07c-.821.426-1.811-.351-1.543-1.27a1.724 1.724 0 00-1.018-2.143c-.936-.39-1.287-1.651-.5-2.385a1.724 1.724 0 00.386-1.943c-.278-.859.53-1.663 1.424-1.4.77.218 1.599-.41 1.773-1.182z"/></svg></div>
                         <div class="text-left">
                             <h4 class="font-bold text-gray-800 text-sm">Pengaturan Akun</h4>
-                            <p class="text-xs text-gray-500 mt-0.5">Ubah profil, email, dan password</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Buka form edit profil</p>
                         </div>
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg>
                 </button>
+
+                <a href="{% url 'password_change' %}" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-500 border border-gray-100"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 0v1a7 7 0 0 1-7 7v2h14v-2a7 7 0 0 1-7-7v-1"/></svg></div>
+                        <div class="text-left">
+                            <h4 class="font-bold text-gray-800 text-sm">Ganti Password</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">Ubah kata sandi login Anda</p>
+                        </div>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg>
+                </a>
 
                 <button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-4">
@@ -158,32 +224,32 @@
         <div>
             <div class="flex justify-between items-center mb-4 px-2">
                 <h2 class="text-lg font-bold text-gray-800">Pencapaian</h2>
-                <span class="text-sm font-bold text-[#00B27A]">5/6</span>
+                <span class="text-sm font-bold text-[#00B27A]">{{ completed_achievements }}/6</span>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div class="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm">
-                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></div>
-                    <span class="text-xs font-bold text-gray-800">Pelapor Pertama</span>
+                <div class="{% if total_reports >= 1 %}bg-orange-50 border-orange-100{% else %}bg-gray-50 border-gray-200{% endif %} border p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm {% if total_reports < 1 %}grayscale opacity-60{% endif %}">
+                    <div class="w-10 h-10 {% if total_reports >= 1 %}bg-orange-100 text-orange-500{% else %}bg-gray-200 text-gray-500{% endif %} rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></div>
+                    <span class="text-xs font-bold {% if total_reports >= 1 %}text-gray-800{% else %}text-gray-500{% endif %}">Pelapor Pertama</span>
                 </div>
-                <div class="bg-red-50 border border-red-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm">
-                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15 8H21L16.5 12.5L18.5 19L12 15.5L5.5 19L7.5 12.5L3 8H9L12 2Z"/></svg></div>
-                    <span class="text-xs font-bold text-gray-800">5 Laporan</span>
+                <div class="{% if total_reports >= 5 %}bg-red-50 border-red-100{% else %}bg-gray-50 border-gray-200{% endif %} border p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm {% if total_reports < 5 %}grayscale opacity-60{% endif %}">
+                    <div class="w-10 h-10 {% if total_reports >= 5 %}bg-red-100 text-red-500{% else %}bg-gray-200 text-gray-500{% endif %} rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15 8H21L16.5 12.5L18.5 19L12 15.5L5.5 19L7.5 12.5L3 8H9L12 2Z"/></svg></div>
+                    <span class="text-xs font-bold {% if total_reports >= 5 %}text-gray-800{% else %}text-gray-500{% endif %}">5 Laporan</span>
                 </div>
-                <div class="bg-purple-50 border border-purple-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm">
-                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM11 17h2v2h-2zm0-10h2v8h-2z"/></svg></div>
-                    <span class="text-xs font-bold text-gray-800">10 Laporan</span>
+                <div class="{% if total_reports >= 10 %}bg-purple-50 border-purple-100{% else %}bg-gray-50 border-gray-200{% endif %} border p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm {% if total_reports < 10 %}grayscale opacity-60{% endif %}">
+                    <div class="w-10 h-10 {% if total_reports >= 10 %}bg-purple-100 text-purple-500{% else %}bg-gray-200 text-gray-500{% endif %} rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM11 17h2v2h-2zm0-10h2v8h-2z"/></svg></div>
+                    <span class="text-xs font-bold {% if total_reports >= 10 %}text-gray-800{% else %}text-gray-500{% endif %}">10 Laporan</span>
                 </div>
-                <div class="bg-green-50 border border-green-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-[#00B27A]"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8"/></svg></div>
-                    <span class="text-xs font-bold text-gray-800">Trending</span>
+                <div class="{% if completed_reports >= 3 %}bg-green-50 border-green-100{% else %}bg-gray-50 border-gray-200{% endif %} border p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm {% if completed_reports < 3 %}grayscale opacity-60{% endif %}">
+                    <div class="w-10 h-10 {% if completed_reports >= 3 %}bg-green-100 text-[#00B27A]{% else %}bg-gray-200 text-gray-500{% endif %} rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8"/></svg></div>
+                    <span class="text-xs font-bold {% if completed_reports >= 3 %}text-gray-800{% else %}text-gray-500{% endif %}">3 Selesai</span>
                 </div>
-                <div class="bg-pink-50 border border-pink-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm">
-                    <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1 4.5 2.09C12.59 5 14.26 4 16 4 18.5 4 20.5 6 20.5 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
-                    <span class="text-xs font-bold text-gray-800">100 Likes</span>
+                <div class="{% if support_reports >= 5 %}bg-pink-50 border-pink-100{% else %}bg-gray-50 border-gray-200{% endif %} border p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm {% if support_reports < 5 %}grayscale opacity-60{% endif %}">
+                    <div class="w-10 h-10 {% if support_reports >= 5 %}bg-pink-100 text-pink-500{% else %}bg-gray-200 text-gray-500{% endif %} rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1 4.5 2.09C12.59 5 14.26 4 16 4 18.5 4 20.5 6 20.5 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+                    <span class="text-xs font-bold {% if support_reports >= 5 %}text-gray-800{% else %}text-gray-500{% endif %}">5 Rating</span>
                 </div>
-                <div class="bg-gray-50 border border-gray-200 p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 grayscale opacity-60">
-                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 20h10M12 4a4 4 0 0 1 4 4v5a6 6 0 0 1-12 0V8a4 4 0 0 1 4-4z"/></svg></div>
-                    <span class="text-xs font-bold text-gray-500">Terverifikasi</span>
+                <div class="{% if is_veteran %}bg-blue-50 border-blue-100{% else %}bg-gray-50 border-gray-200{% endif %} border p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 shadow-sm {% if not is_veteran %}grayscale opacity-60{% endif %}">
+                    <div class="w-10 h-10 {% if is_veteran %}bg-blue-100 text-blue-500{% else %}bg-gray-200 text-gray-500{% endif %} rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 20h10M12 4a4 4 0 0 1 4 4v5a6 6 0 0 1-12 0V8a4 4 0 0 1 4-4z"/></svg></div>
+                    <span class="text-xs font-bold {% if is_veteran %}text-gray-800{% else %}text-gray-500{% endif %}">Veteran</span>
                 </div>
             </div>
         </div>
@@ -195,64 +261,103 @@
                 </div>
                 <div>
                     <h2 class="text-lg font-bold text-gray-800 leading-tight">Laporan Saya</h2>
-                    <p class="text-xs text-gray-500 font-medium">5 laporan dibuat</p>
+                    <p class="text-xs text-gray-500 font-medium">{{ total_reports }} laporan dibuat</p>
                 </div>
             </div>
 
             <div class="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
-                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-[#00B27A] text-white shadow-sm">Semua <span class="ml-1 bg-white/20 px-1.5 rounded-md">5</span></button>
-                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 shadow-sm">Menunggu <span class="ml-1 bg-gray-100 px-1.5 rounded-md">1</span></button>
-                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 shadow-sm">Diproses <span class="ml-1 bg-gray-100 px-1.5 rounded-md">2</span></button>
-                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 shadow-sm">Selesai <span class="ml-1 bg-gray-100 px-1.5 rounded-md">2</span></button>
+                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-[#00B27A] text-white shadow-sm">Semua <span class="ml-1 bg-white/20 px-1.5 rounded-md">{{ total_reports }}</span></button>
+                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 shadow-sm">Menunggu <span class="ml-1 bg-gray-100 px-1.5 rounded-md">{{ pending_reports }}</span></button>
+                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 shadow-sm">Diproses <span class="ml-1 bg-gray-100 px-1.5 rounded-md">{{ processing_reports }}</span></button>
+                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 shadow-sm">Selesai <span class="ml-1 bg-gray-100 px-1.5 rounded-md">{{ completed_reports }}</span></button>
             </div>
 
             <div class="space-y-4">
+                {% for report in recent_reports %}
                 <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex gap-4">
                     <div class="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative">
-                        <img src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=200" alt="Jalan Berlubang di Depan Kantor Pos" class="w-full h-full object-cover" />
+                        {% if report.gambar and report.gambar.0 %}
+                        <img src="/media/{{ report.gambar.0 }}" alt="{{ report.judul }}" class="w-full h-full object-cover" />
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=200" alt="{{ report.judul }}" class="w-full h-full object-cover" />
+                        {% endif %}
                         <div class="absolute bottom-1 right-1 bg-white/90 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
                     </div>
                     <div class="flex-1 min-w-0 flex flex-col">
                         <div class="flex justify-between items-start mb-1">
-                            <span class="text-[10px] font-bold text-green-600 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Selesai</span>
-                            <span class="text-[10px] text-gray-400 font-semibold">2 hari lalu</span>
+                            <span class="text-[10px] font-bold {% if report.status == 'selesai' %}text-green-600{% elif report.status == 'diproses' %}text-yellow-600{% else %}text-gray-600{% endif %} flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full {% if report.status == 'selesai' %}bg-green-500{% elif report.status == 'diproses' %}bg-yellow-500{% else %}bg-gray-500{% endif %}"></span>
+                                {% if report.status == 'selesai' %}Selesai{% elif report.status == 'diproses' %}Diproses{% else %}Menunggu{% endif %}
+                            </span>
+                            <span class="text-[10px] text-gray-400 font-semibold">{{ report.created_at|date:"d M Y" }}</span>
                         </div>
-                        <h3 class="font-bold text-gray-800 text-sm leading-snug mb-1 line-clamp-1">Jalan Berlubang di Depan Kantor Pos</h3>
-                        <p class="text-xs text-gray-500 line-clamp-1 mb-2">Jl. Menteng Raya No. 1</p>
+                        <h3 class="font-bold text-gray-800 text-sm leading-snug mb-1 line-clamp-1">{{ report.judul }}</h3>
+                        <p class="text-xs text-gray-500 line-clamp-1 mb-2">{{ report.lokasi_detail|default:"Lokasi tidak spesifik" }}</p>
                         <div class="w-full h-1.5 bg-gray-100 rounded-full mt-auto overflow-hidden flex">
-                            <div class="h-full bg-green-500 w-full"></div>
+                            <div class="h-full {% if report.status == 'selesai' %}bg-green-500{% elif report.status == 'diproses' %}bg-yellow-500{% else %}bg-blue-500{% endif %} w-full"></div>
                         </div>
                         <div class="flex items-center gap-4 mt-3">
-                            <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 116.364 6.364L12 15l-2.682-2.318a4.5 4.5 0 01-6.364-6.364z"/></svg> <span class="text-xs font-bold">32</span></div>
-                            <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg> <span class="text-xs font-bold">12</span></div>
+                            <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 116.364 6.364L12 15l-2.682-2.318a4.5 4.5 0 01-6.364-6.364z"/></svg> <span class="text-xs font-bold">{{ report.get_urgensi_display }}</span></div>
+                            <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg> <span class="text-xs font-bold">{{ report.deskripsi|truncatechars:20 }}</span></div>
                         </div>
                     </div>
                 </div>
-
-                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex gap-4">
-                    <div class="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative">
-                        <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80&w=200" alt="Sampah Menumpuk di Gang Mawar" class="w-full h-full object-cover" />
-                        <div class="absolute bottom-1 right-1 bg-white/90 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+                {% empty %}
+                <div class="bg-gray-50 rounded-2xl p-8 text-center border border-gray-100">
+                    <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
                     </div>
-                    <div class="flex-1 min-w-0 flex flex-col">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="text-[10px] font-bold text-yellow-600 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Diproses</span>
-                            <span class="text-[10px] text-gray-400 font-semibold">1 hari lalu</span>
-                        </div>
-                        <h3 class="font-bold text-gray-800 text-sm leading-snug mb-1 line-clamp-1">Sampah Menumpuk di Gang Mawar</h3>
-                        <p class="text-xs text-gray-500 line-clamp-1 mb-2">Gang Mawar RT 05/03, Mente...</p>
-                        <div class="w-full h-1.5 bg-gray-100 rounded-full mt-auto overflow-hidden flex">
-                            <div class="h-full bg-yellow-500 w-1/2"></div>
-                        </div>
-                        <div class="flex items-center gap-4 mt-3">
-                            <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 116.364 6.364L12 15l-2.682-2.318a4.5 4.5 0 01-6.364-6.364z"/></svg> <span class="text-xs font-bold">20</span></div>
-                            <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg> <span class="text-xs font-bold">9</span></div>
-                        </div>
-                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Belum ada laporan</h3>
+                    <p class="text-sm text-gray-500 mb-4">Mulai buat laporan pertama Anda untuk membantu masyarakat</p>
+                    <a href="/lapor/" class="inline-flex items-center gap-2 bg-[#00B27A] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Buat Laporan
+                    </a>
                 </div>
+                {% endfor %}
             </div>
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var menuAccountButton = document.getElementById('menu-account-settings');
+            var modal = document.getElementById('profile-modal');
+            var closeButton = document.getElementById('profile-modal-close');
+            if (!menuAccountButton || !modal || !closeButton) return;
+
+            function hideModal() {
+                modal.classList.add('hidden');
+            }
+
+            function showModal() {
+                modal.classList.remove('hidden');
+            }
+
+            menuAccountButton.addEventListener('click', function () {
+                showModal();
+            });
+
+            closeButton.addEventListener('click', hideModal);
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    hideModal();
+                }
+            });
+
+            // Auto-hide success toast after 3 seconds
+            var successToast = document.getElementById('success-toast');
+            if (successToast) {
+                setTimeout(function() {
+                    successToast.style.display = 'none';
+                }, 3000);
+            }
+        });
+    </script>
 </body>
 </html>

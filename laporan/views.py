@@ -2,11 +2,23 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg
+from django.contrib.auth.decorators import login_required
 from .models import Pengaduan
+from profil.models import Profile
 import json
 
+@login_required(login_url='/login/')
 def beranda_view(request):
     kategori_filter = request.GET.get('kategori', '')
+    
+    # Get user profile data
+    user = request.user
+    username = user.username or ''
+    profile_name = user.get_full_name() or user.first_name or username
+    email_display = user.email or username
+
+    profile, _ = Profile.objects.get_or_create(user=user)
+    profile_location = profile.location or 'Lokasi belum tersedia'
     
     # Get all laporan
     laporan_list = Pengaduan.objects.all().order_by('-created_at')
@@ -38,6 +50,8 @@ def beranda_view(request):
         'kategori_choices': kategori_choices,
         'kategori_filter': kategori_filter,
         'tingkat_kepuasan': tingkat_kepuasan,
+        'profile_name': profile_name,
+        'profile_location': profile_location,
     })
 
 def lapor_view(request):

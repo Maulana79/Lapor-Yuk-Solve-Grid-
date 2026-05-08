@@ -19,14 +19,14 @@
     <main class="px-4 sm:px-6 lg:px-8 py-10">
         <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-8 text-white shadow-xl shadow-emerald-500/10 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-                <span class="text-emerald-100 text-sm font-medium">Selamat pagi 🍊</span>
-                <h1 class="text-3xl font-extrabold mt-1.5 tracking-tight">Budi Santoso</h1>
+                <span class="text-emerald-100 text-sm font-medium">Selamat datang</span>
+                <h1 class="text-3xl font-extrabold mt-1.5 tracking-tight">{{ profile_name }}</h1>
                 <div class="flex items-center gap-2 mt-4 text-emerald-100 bg-white/10 px-3.5 py-2 rounded-full w-fit text-xs font-semibold">
                     <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    <span>Kec. Menteng, Jakarta Pusat</span>
+                    <span>{{ profile_location }}</span>
                 </div>
             </div>
             <a href="/lapor/" class="inline-flex items-center gap-2 bg-white text-emerald-600 px-5 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-black/5 hover:bg-emerald-50 transition">

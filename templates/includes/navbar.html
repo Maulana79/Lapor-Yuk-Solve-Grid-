@@ -36,9 +36,13 @@
                 </a>
 
                 <a href="/profil/" class="flex items-center gap-2 pl-2 border-l border-gray-100 hover:opacity-80 transition">
+                    {% if current_profile and current_profile.photo %}
+                    <img src="{{ current_profile.photo.url }}" alt="Foto Profil" class="w-8 h-8 rounded-full object-cover border border-emerald-100" />
+                    {% else %}
                     <div class="w-8 h-8 flex items-center justify-center bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-full text-xs font-bold">
-                        BS
+                        {{ request.user.first_name|default:request.user.username|slice:":1" }}{{ request.user.last_name|default:''|slice:":1" }}
                     </div>
+                    {% endif %}
                 </a>
             </div>
         </div>
