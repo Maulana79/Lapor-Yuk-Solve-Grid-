@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+from django.templatetags.static import static
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -34,10 +35,15 @@ DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,lapor-yuk.vercel.app').split(',')
 
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Application definition
 
 INSTALLED_APPS = [
+    "unfold", 
+    "unfold.contrib.filters", 
+    "unfold.contrib.forms",   
+    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -74,6 +80,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'profil.context_processors.current_profile',
+                'laporan.context_processors.notifikasi_context',
             ],
         },
     },
@@ -143,3 +150,27 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+UNFOLD = {
+    "SITE_TITLE": "Admin Lapor Yuk!",
+    "SITE_HEADER": "Lapor Yuk! Control Panel",
+    "SITE_ICON": {
+        "light": lambda request: static("images/LaporYuk.svg"), 
+        "dark": lambda request: static("images/LaporYuk.svg"),  
+    },
+    "COLORS": {
+        "primary": {
+            "50": "236, 253, 245",
+            "100": "209, 250, 229",
+            "200": "167, 243, 208",
+            "300": "110, 231, 183",
+            "400": "52, 211, 153",
+            "500": "16, 185, 129", 
+            "600": "5, 150, 105",
+            "700": "4, 120, 87",
+            "800": "6, 95, 70",
+            "900": "4, 63, 48",
+            "950": "2, 44, 34",
+        },
+    },
+}

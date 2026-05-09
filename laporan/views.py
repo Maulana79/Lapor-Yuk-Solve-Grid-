@@ -1,11 +1,13 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Avg
+from django.db.models import Avg, Q
 from django.contrib.auth.decorators import login_required
-from .models import Pengaduan
+from .models import Pengaduan, Notifikasi
 from profil.models import Profile
 import json
+from google import genai
 
 @login_required(login_url='/login/')
 def beranda_view(request):
@@ -57,8 +59,23 @@ def beranda_view(request):
 def lapor_view(request):
     return render(request, 'laporan/lapor.html')
 
+def pencarian_view(request):
+    query = request.GET.get('q', '').strip()
+    hasil_laporan = Pengaduan.objects.none()
+
+    if query:
+        hasil_laporan = Pengaduan.objects.filter(
+            Q(judul__icontains=query) | Q(deskripsi__icontains=query)
+        ).order_by('-created_at')
+
+    return render(request, 'laporan/hasil_pencarian.html', {
+        'query': query,
+        'hasil_laporan': hasil_laporan,
+    })
+
+@login_required(login_url='/login/')
 def riwayat_view(request):
-    laporan_list = Pengaduan.objects.order_by('-created_at')
+    laporan_list = Pengaduan.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'riwayat/riwayat.html', {
         'laporan_list': laporan_list,
         'total_laporan': laporan_list.count(),
@@ -120,3 +137,59 @@ def api_pengaduan(request):
             }, status=400)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+
+@login_required(login_url='/login/')
+def mark_notifikasi_read(request, notif_id):
+    """
+    API endpoint untuk menandai notifikasi sebagai sudah dibaca.
+    """
+    try:
+        # Cuma ambil notifikasi yang sesuai ID dan memang milik user yang lagi login
+        notifikasi = Notifikasi.objects.get(id=notif_id, penerima=request.user)
+        notifikasi.is_read = True
+        notifikasi.save()
+        return JsonResponse({'success': True, 'message': 'Notifikasi ditandai sebagai dibaca'})
+    except Notifikasi.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Notifikasi tidak ditemukan'}, status=404)
+
+
+def chatbot_api(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            pesan_user = data.get('pesan')
+
+            if not pesan_user:
+                return JsonResponse({'success': False, 'error': 'Pesan kosong'})
+
+            # Inisialisasi client baru
+            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            
+            prompt_system = f"""
+            ROLE: 
+            Kamu adalah 'MinYuk', asisten virtual resmi aplikasi 'Lapor Yuk!'.
+            Lokasi tugasmu adalah di Samarinda, Kalimantan Timur.
+
+            BATASAN KETAT (MANDATORY):
+            1. Kamu HANYA boleh menjawab pertanyaan seputar pelaporan masalah publik (jalan rusak, sampah, banjir, dll).
+            2. Jika user bertanya di luar topik pengaduan (seperti politik, presiden, artis, harga barang, atau pengetahuan umum lainnya), kamu WAJIB menjawab: 
+            'Maaf, sebagai asisten Lapor Yuk!, saya hanya diinstruksikan untuk membantu Anda terkait pengaduan masyarakat di Samarinda. Ada yang bisa saya bantu soal laporan Anda?'
+            3. JANGAN berikan informasi presiden, ekonomi, atau berita dunia meskipun kamu tahu jawabannya.
+
+            Pertanyaan User: {pesan_user}
+            """
+            
+            # Pemanggilan model dengan nama yang benar untuk SDK terbaru
+            response = client.models.generate_content(
+                model="gemini-2.5-flash", 
+                contents=prompt_system # Kirim langsung pesan user-nya
+            )
+            
+            return JsonResponse({'success': True, 'balasan': response.text})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+            
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)

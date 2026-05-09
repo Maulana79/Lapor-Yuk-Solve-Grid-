@@ -44,3 +44,17 @@ class Pengaduan(models.Model):
 
     def __str__(self):
         return self.judul
+
+
+class Notifikasi(models.Model):
+    penerima = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifikasi')
+    pesan = models.TextField()
+    is_read = models.BooleanField(default=False)
+    tanggal_dibuat = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-tanggal_dibuat']
+        verbose_name_plural = 'Notifikasi'
+
+    def __str__(self):
+        return f"Notifikasi untuk {self.penerima.username}: {self.pesan[:50]}"
