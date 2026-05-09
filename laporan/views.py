@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg, Q
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
+from django.conf import settings
 from .models import Pengaduan, Notifikasi
 from profil.models import Profile
 import json
