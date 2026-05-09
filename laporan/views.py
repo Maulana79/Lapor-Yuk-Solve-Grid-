@@ -78,13 +78,36 @@ def pencarian_view(request):
 
 @login_required(login_url='/login/')
 def riwayat_view(request):
-    laporan_list = Pengaduan.objects.filter(user=request.user).order_by('-created_at')
+    query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    sort = request.GET.get('sort', 'latest').strip()
+
+    laporan_list = Pengaduan.objects.filter(user=request.user)
+
+    if query:
+        laporan_list = laporan_list.filter(
+            Q(judul__icontains=query) |
+            Q(deskripsi__icontains=query) |
+            Q(lokasi_detail__icontains=query)
+        )
+
+    if status_filter in ['pending', 'diproses', 'selesai']:
+        laporan_list = laporan_list.filter(status=status_filter)
+
+    if sort == 'oldest':
+        laporan_list = laporan_list.order_by('created_at')
+    else:
+        laporan_list = laporan_list.order_by('-created_at')
+
     return render(request, 'riwayat/riwayat.html', {
         'laporan_list': laporan_list,
         'total_laporan': laporan_list.count(),
         'jumlah_menunggu': laporan_list.filter(status='pending').count(),
         'jumlah_diproses': laporan_list.filter(status='diproses').count(),
         'jumlah_selesai': laporan_list.filter(status='selesai').count(),
+        'query': query,
+        'status_filter': status_filter,
+        'sort': sort,
     })
 
 @csrf_exempt

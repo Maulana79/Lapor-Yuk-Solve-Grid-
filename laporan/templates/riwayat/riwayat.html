@@ -18,15 +18,7 @@
                 <h1 class="text-3xl font-extrabold text-white tracking-tight">Riwayat Laporan</h1>
                 <span class="text-2xl">📋</span>
             </div>
-            <p class="text-white/80 font-medium mb-8">Pantau semua laporan di sekitarmu dan aktivitas selama sebulan terakhir</p>
-            <div class="flex flex-wrap gap-3">
-                <button class="bg-white text-[#00B27A] px-5 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm">
-                    <span class="text-sm">Di Sekitarmu</span>
-                </button>
-                <button class="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors">
-                    <span class="text-sm">1 Bulan Terakhir</span>
-                </button>
-            </div>
+            <p class="text-white/80 font-medium mb-8">Pantau semua laporan dan aktivitasmu selama sebulan terakhir</p>
         </div>
     </div>
 
@@ -62,17 +54,25 @@
             </div>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-3 mb-8">
-            <div class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center shadow-sm">
-                <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                <input type="text" placeholder="Cari laporan, lokasi, atau kategori..." class="w-full bg-transparent border-none outline-none text-gray-700 text-sm" />
-            </div>
-            <div class="flex gap-3">
-                <button class="bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 shadow-sm transition-colors">Filter</button>
-                <button class="bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 shadow-sm transition-colors">Terbaru</button>
-            </div>
+        <div class="flex flex-col gap-3 mb-8">
+            <form method="get" class="grid gap-3 md:grid-cols-[1fr_auto_auto]">
+                <div class="flex items-center bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input name="q" type="text" value="{{ query }}" placeholder="Cari laporan, lokasi, atau kategori..." class="w-full bg-transparent border-none outline-none text-gray-700 text-sm" />
+                </div>
+                <select name="status" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#00B27A]/20">
+                    <option value=""{% if not status_filter %} selected{% endif %}>Semua Status</option>
+                    <option value="pending"{% if status_filter == 'pending' %} selected{% endif %}>Menunggu</option>
+                    <option value="diproses"{% if status_filter == 'diproses' %} selected{% endif %}>Sedang Diproses</option>
+                    <option value="selesai"{% if status_filter == 'selesai' %} selected{% endif %}>Selesai</option>
+                </select>
+                <div class="flex gap-3">
+                    <button type="submit" class="bg-[#00B27A] text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-[#009968] shadow-sm transition-colors">Terapkan</button>
+                    <button type="submit" name="sort" value="latest" class="px-5 py-3 rounded-xl font-bold text-sm transition-colors {% if sort == 'latest' or not sort %}bg-[#00B27A] text-white border border-[#00B27A] hover:bg-[#009968] shadow-md{% else %}bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 shadow-sm{% endif %}">Terbaru</button>
+                </div>
+            </form>
         </div>
 
         <div class="flex justify-between items-center mb-6">
@@ -119,7 +119,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                        <span class="truncate">{{ laporan.lokasi_detail|default:'Lokasi tidak tersedia' }}</span>
+                        <span class="truncate">
+                            {% if laporan.lokasi_detail %}
+                                {{ laporan.lokasi_detail }}
+                            {% elif laporan.latitude and laporan.longitude %}
+                                {{ laporan.latitude|floatformat:4 }}, {{ laporan.longitude|floatformat:4 }}
+                            {% else %}
+                                Lokasi tidak tersedia
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
                         <div class="flex items-center gap-5 text-gray-400">
