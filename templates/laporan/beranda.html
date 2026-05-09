@@ -144,7 +144,7 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                     <div class="relative h-48 w-full overflow-hidden bg-gray-100">
                         {% if laporan.gambar|length > 0 %}
-                        <img src="/media/{{ laporan.gambar.0 }}" alt="{{ laporan.judul }}" class="w-full h-full object-cover" />
+                        <img src="{{ laporan.gambar_urls.0 }}" alt="{{ laporan.judul }}" class="w-full h-full object-cover" />
                         {% else %}
                         <img src="https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=600" alt="{{ laporan.judul }}" class="w-full h-full object-cover" />
                         {% endif %}

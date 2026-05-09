@@ -1,12 +1,14 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg, Q
 from django.contrib.auth.decorators import login_required
+from django.core.files.storage import default_storage
 from .models import Pengaduan, Notifikasi
 from profil.models import Profile
 import json
+import os
+import uuid
 from google import genai
 
 @login_required(login_url='/login/')
@@ -97,20 +99,15 @@ def api_pengaduan(request):
             longitude = request.POST.get('longitude')
             is_anonim = request.POST.get('is_anonim') == 'true'
             
-            # Handle multiple images
+            # Handle multiple images using default storage (Supabase bucket)
             gambar_paths = []
             if 'gambar' in request.FILES:
                 for uploaded_file in request.FILES.getlist('gambar'):
-                    # Save file to media/pengaduan/
-                    import os
-                    from django.conf import settings
-                    file_path = os.path.join('pengaduan', uploaded_file.name)
-                    full_path = os.path.join(settings.MEDIA_ROOT, file_path)
-                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                    with open(full_path, 'wb+') as destination:
-                        for chunk in uploaded_file.chunks():
-                            destination.write(chunk)
-                    gambar_paths.append(file_path)
+                    extension = os.path.splitext(uploaded_file.name)[1]
+                    filename = f"{uuid.uuid4().hex}{extension}"
+                    file_path = f"pengaduan/{filename}"
+                    saved_path = default_storage.save(file_path, uploaded_file)
+                    gambar_paths.append(saved_path)
 
             pengaduan = Pengaduan.objects.create(
                 judul=judul,

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.files.storage import default_storage
 
 class Pengaduan(models.Model):
     KATEGORI_CHOICES = [
@@ -41,6 +42,22 @@ class Pengaduan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, default='pending')
     rating = models.IntegerField(choices=RATING_CHOICES, null=True, blank=True)  # Kepuasan (1-5)
+
+    @property
+    def gambar_urls(self):
+        urls = []
+        for path in self.gambar or []:
+            if not isinstance(path, str):
+                continue
+            if path.startswith('http://') or path.startswith('https://'):
+                urls.append(path)
+                continue
+            normalized_path = path.replace('\\', '/')
+            try:
+                urls.append(default_storage.url(normalized_path))
+            except Exception:
+                urls.append(normalized_path)
+        return urls
 
     def __str__(self):
         return self.judul

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'storages',
     'laporan',
     'peta',
     'profil',
@@ -141,15 +142,60 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ==========================================
+# KONFIGURASI SUPABASE STORAGE (S3 BOTO3)
+# ==========================================
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STORAGES = {
+    'default': {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
+
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID') # Jika pakai environ, sesuaikan dengan caramu memanggil .env
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'media')
+AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL')
+AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', default='ap-northeast-1')
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_ADDRESSING_STYLE = 'path'
+
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+if not SUPABASE_URL and AWS_S3_ENDPOINT_URL:
+    from urllib.parse import urlparse
+    parsed = urlparse(AWS_S3_ENDPOINT_URL)
+    if parsed.hostname and parsed.hostname.endswith('.storage.supabase.co'):
+        supabase_ref = parsed.hostname.split('.storage.supabase.co')[0]
+        SUPABASE_URL = f'https://{supabase_ref}.supabase.co'
+
+custom_domain = os.getenv(
+    'AWS_S3_CUSTOM_DOMAIN',
+    f"{SUPABASE_URL}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}" if SUPABASE_URL else None
+)
+if custom_domain:
+    custom_domain = custom_domain.strip()
+    if custom_domain.startswith('https://'):
+        custom_domain = custom_domain[len('https://'):]
+    elif custom_domain.startswith('http://'):
+        custom_domain = custom_domain[len('http://'):]
+AWS_S3_CUSTOM_DOMAIN = custom_domain or None
+
+# Pengaturan agar file tidak ketimpa & bisa diakses publik
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = 'public-read'
+AWS_QUERYSTRING_AUTH = False # Agar URL gambar tidak ada token panjang di belakangnya
 
 UNFOLD = {
     "SITE_TITLE": "Admin Lapor Yuk!",

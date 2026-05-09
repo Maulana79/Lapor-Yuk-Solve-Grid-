@@ -7,3 +7,4 @@ python-dotenv
 pillow
 django-unfold
 google-genai
+django-storages boto3

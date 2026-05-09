@@ -88,7 +88,7 @@
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-5 hover:shadow-md transition-shadow">
                 <div class="relative w-full sm:w-40 h-40 sm:h-auto rounded-xl overflow-hidden shrink-0 bg-gray-100 flex items-center justify-center text-gray-400">
                     {% if laporan.gambar %}
-                        <img src="{{ laporan.gambar.0 }}" alt="{{ laporan.judul }}" class="w-full h-full object-cover" />
+                        <img src="{{ laporan.gambar_urls.0 }}" alt="{{ laporan.judul }}" class="w-full h-full object-cover" />
                     {% else %}
                         <div class="text-center px-4">
                             <p class="text-sm font-semibold">Tidak ada gambar</p>

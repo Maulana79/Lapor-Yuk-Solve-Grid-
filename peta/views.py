@@ -31,7 +31,7 @@ def peta_view(request):
             longitude += random.uniform(-0.05, 0.05)
         
         # Get first image or use placeholder
-        image_url = f"/media/{laporan.gambar[0]}" if laporan.gambar and len(laporan.gambar) > 0 else "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400"
+        image_url = laporan.gambar_urls[0] if laporan.gambar and len(laporan.gambar) > 0 else "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400"
         
         laporan_data = {
             'id': laporan.id,

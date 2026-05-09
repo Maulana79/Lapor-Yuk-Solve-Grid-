@@ -278,7 +278,7 @@
                 <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex gap-4">
                     <div class="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative">
                         {% if report.gambar and report.gambar.0 %}
-                        <img src="/media/{{ report.gambar.0 }}" alt="{{ report.judul }}" class="w-full h-full object-cover" />
+                        <img src="{{ report.gambar_urls.0 }}" alt="{{ report.judul }}" class="w-full h-full object-cover" />
                         {% else %}
                         <img src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=200" alt="{{ report.judul }}" class="w-full h-full object-cover" />
                         {% endif %}
