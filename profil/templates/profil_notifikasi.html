@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifikasi - LaporYuk!</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+</head>
+<body class="min-h-screen bg-gray-50 pb-24">
+    {% include 'includes/navbar.html' %}
+
+    <main class="max-w-5xl mx-auto px-6 md:px-12 py-10">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Notifikasi</h1>
+            <p class="text-gray-500 mt-2">Lihat pemberitahuan terbaru dan status laporan Anda.</p>
+        </div>
+
+        <div class="space-y-4">
+            {% if notifikasi_list %}
+                {% for notif in notifikasi_list %}
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                    <div class="flex items-start justify-between gap-4 mb-2">
+                        <div>
+                            <h2 class="font-semibold text-gray-800">Pemberitahuan</h2>
+                            <p class="text-xs text-gray-400">{{ notif.tanggal_dibuat|date:'d M Y H:i' }}</p>
+                        </div>
+                        {% if not notif.is_read %}
+                        <span class="text-xs font-bold text-white bg-red-500 rounded-full px-3 py-1">Baru</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-600">{{ notif.pesan }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-500 shadow-sm">
+                    <p class="font-semibold">Tidak ada notifikasi baru.</p>
+                    <p class="text-sm mt-2">Periksa kembali nanti setelah laporan Anda diperbarui.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mt-10">
+            <a href="{% url 'profil' %}" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#00B27A] text-white font-bold hover:bg-[#009968] transition">
+                Kembali ke Profil
+            </a>
+        </div>
+    </main>
+</body>
+</html>

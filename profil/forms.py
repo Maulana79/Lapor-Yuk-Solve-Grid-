@@ -6,8 +6,12 @@ from .models import Profile
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['photo', 'phone', 'location']
+        fields = ['cover_photo', 'photo', 'phone', 'location']
         widgets = {
+            'cover_photo': forms.ClearableFileInput(attrs={
+                'class': 'w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500',
+                'accept': 'image/*',
+            }),
             'photo': forms.ClearableFileInput(attrs={
                 'class': 'w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500',
                 'accept': 'image/*',

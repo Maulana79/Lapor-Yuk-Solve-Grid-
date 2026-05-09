@@ -1,0 +1,48 @@
+<div id="report-list" class="space-y-4">
+    {% for report in recent_reports %}
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex gap-4">
+        <div class="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative">
+            {% if report.gambar and report.gambar.0 %}
+            <img src="{{ report.gambar_urls.0 }}" alt="{{ report.judul }}" class="w-full h-full object-cover" />
+            {% else %}
+            <img src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=200" alt="{{ report.judul }}" class="w-full h-full object-cover" />
+            {% endif %}
+            <div class="absolute bottom-1 right-1 bg-white/90 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+        </div>
+        <div class="flex-1 min-w-0 flex flex-col">
+            <div class="flex justify-between items-start mb-1">
+                <span class="text-[10px] font-bold {% if report.status == 'selesai' %}text-green-600{% elif report.status == 'diproses' %}text-yellow-600{% else %}text-gray-600{% endif %} flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full {% if report.status == 'selesai' %}bg-green-500{% elif report.status == 'diproses' %}bg-yellow-500{% else %}bg-gray-500{% endif %}"></span>
+                    {% if report.status == 'selesai' %}Selesai{% elif report.status == 'diproses' %}Diproses{% else %}Menunggu{% endif %}
+                </span>
+                <span class="text-[10px] text-gray-400 font-semibold">{{ report.created_at|date:"d M Y" }}</span>
+            </div>
+            <h3 class="font-bold text-gray-800 text-sm leading-snug mb-1 line-clamp-1">{{ report.judul }}</h3>
+            <p class="text-xs text-gray-500 line-clamp-1 mb-2">{{ report.lokasi_detail|default:"Lokasi tidak spesifik" }}</p>
+            <div class="w-full h-1.5 bg-gray-100 rounded-full mt-auto overflow-hidden flex">
+                <div class="h-full {% if report.status == 'selesai' %}bg-green-500{% elif report.status == 'diproses' %}bg-yellow-500{% else %}bg-blue-500{% endif %} w-full"></div>
+            </div>
+            <div class="flex items-center gap-4 mt-3">
+                <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 116.364 6.364L12 15l-2.682-2.318a4.5 4.5 0 01-6.364-6.364z"/></svg> <span class="text-xs font-bold">{{ report.get_urgensi_display }}</span></div>
+                <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg> <span class="text-xs font-bold">{{ report.deskripsi|truncatechars:20 }}</span></div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="bg-gray-50 rounded-2xl p-8 text-center border border-gray-100">
+        <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Belum ada laporan</h3>
+        <p class="text-sm text-gray-500 mb-4">Mulai buat laporan pertama Anda untuk membantu masyarakat</p>
+        <a href="/lapor/" class="inline-flex items-center gap-2 bg-[#00B27A] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Buat Laporan
+        </a>
+    </div>
+    {% endfor %}
+</div>

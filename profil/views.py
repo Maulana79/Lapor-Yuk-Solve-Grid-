@@ -1,10 +1,12 @@
+from django.http import JsonResponse
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 
 from .forms import ProfileForm
 from .models import Profile
-from laporan.models import Pengaduan
+from laporan.models import Pengaduan, Notifikasi
 
 
 @login_required(login_url='/login/')
@@ -40,9 +42,29 @@ def profil_view(request):
     processing_reports = laporan_qs.filter(status='diproses').count()
     completed_reports = laporan_qs.filter(status='selesai').count()
     support_reports = laporan_qs.filter(rating__isnull=False).count()
+    jumlah_notifikasi = Notifikasi.objects.filter(penerima=user, is_read=False).count()
 
-    # Get recent reports for display
-    recent_reports = laporan_qs.order_by('-created_at')[:4]
+    filter_status = request.GET.get('status', 'all')
+    all_reports = laporan_qs.order_by('-created_at')
+    filtered_reports = all_reports
+    if filter_status in ['pending', 'diproses', 'selesai']:
+        filtered_reports = filtered_reports.filter(status=filter_status)
+
+    # Get reports for display
+    recent_reports = filtered_reports
+
+    report_cards_json = [
+        {
+            'judul': report.judul,
+            'status': report.status,
+            'created_at': report.created_at.strftime('%d %b %Y'),
+            'lokasi_detail': report.lokasi_detail or 'Lokasi tidak spesifik',
+            'urgensi': report.get_urgensi_display(),
+            'deskripsi': report.deskripsi,
+            'gambar_url': report.gambar_urls[0] if report.gambar_urls else '',
+        }
+        for report in all_reports
+    ]
 
     # Calculate achievements
     completed_achievements = 0
@@ -99,5 +121,28 @@ def profil_view(request):
         'recent_reports': recent_reports,
         'completed_achievements': completed_achievements,
         'is_veteran': is_veteran,
+        'jumlah_notifikasi': jumlah_notifikasi,
+        'filter_status': filter_status,
+        'report_cards_json': report_cards_json,
     }
     return render(request, 'profil.html', context)
+
+
+@login_required(login_url='/login/')
+def notifikasi_view(request):
+    from laporan.models import Notifikasi
+
+    notifikasi_list = Notifikasi.objects.filter(penerima=request.user)
+    return render(request, 'profil_notifikasi.html', {
+        'notifikasi_list': notifikasi_list,
+    })
+
+
+@login_required(login_url='/login/')
+def privasi_view(request):
+    return render(request, 'profil_privacy.html')
+
+
+@login_required(login_url='/login/')
+def pusat_bantuan_view(request):
+    return render(request, 'profil_help.html')

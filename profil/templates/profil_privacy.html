@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privasi & Keamanan - LaporYuk!</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+</head>
+<body class="min-h-screen bg-gray-50 pb-24">
+    {% include 'includes/navbar.html' %}
+
+    <main class="max-w-5xl mx-auto px-6 md:px-12 py-10">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Privasi & Keamanan</h1>
+            <p class="text-gray-500 mt-2">Kelola keamanan akun dan preferensi privasi Anda.</p>
+        </div>
+
+        <div class="grid gap-4">
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-800 mb-2">Ubah Kata Sandi</h2>
+                <p class="text-sm text-gray-600 mb-4">Amankan akun Anda dengan mengganti kata sandi secara berkala dan gunakan kombinasi karakter yang kuat.</p>
+                <a href="{% url 'password_change' %}" class="inline-block px-4 py-3 rounded-xl bg-[#00B27A] text-white font-bold hover:bg-[#009968] transition">Ubah Password</a>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-800 mb-2">Keamanan Akun</h2>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-2">
+                    <li>Pastikan kata sandi berbeda dari akun lain dan simpan dengan aman.</li>
+                    <li>Keluar dari perangkat publik setelah menggunakan aplikasi.</li>
+                    <li>Periksa aktivitas login jika Anda merasa ada tindakan mencurigakan.</li>
+                </ul>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-800 mb-2">Privasi Laporan</h2>
+                <p class="text-sm text-gray-600 mb-3">Jika Anda memilih laporan anonim, identitas Anda tidak ditampilkan kepada publik atau pihak lain.</p>
+                <p class="text-sm text-gray-600">LaporYuk! hanya menggunakan informasi yang diperlukan untuk memproses laporan dan memberi tahu Anda tentang statusnya.</p>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-800 mb-2">Pengelolaan Data</h2>
+                <p class="text-sm text-gray-600">Data profil seperti nama, lokasi, dan kontak disimpan dengan aman.</p>
+                <p class="text-sm text-gray-600">Kami tidak membagikan informasi pribadi Anda dengan pihak ketiga tanpa izin kecuali bila diperlukan untuk penanganan laporan.</p>
+            </div>
+        </div>
+
+        <div class="mt-10">
+            <a href="{% url 'profil' %}" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#00B27A] text-white font-bold hover:bg-[#009968] transition">
+                Kembali ke Profil
+            </a>
+        </div>
+    </main>
+</body>
+</html>

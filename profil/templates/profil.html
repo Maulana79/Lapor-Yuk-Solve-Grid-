@@ -29,9 +29,13 @@
     {% endif %}
 
     <div class="h-48 md:h-64 w-full relative">
+        {% if profile.cover_photo %}
+        <img src="{{ profile.cover_photo.url }}" alt="Cover" class="w-full h-full object-cover" />
+        {% else %}
         <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&q=80&w=1200" alt="Cover" class="w-full h-full object-cover" />
+        {% endif %}
         <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-        <button class="absolute top-6 right-6 md:right-12 bg-white/20 hover:bg-white/30 backdrop-blur-md p-2.5 rounded-full text-white transition-colors border border-white/30">
+        <button id="profile-cover-button" class="absolute top-6 right-6 md:right-12 bg-white/20 hover:bg-white/30 backdrop-blur-md p-2.5 rounded-full text-white transition-colors border border-white/30">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
                 <circle cx="12" cy="13" r="3"/>
@@ -115,18 +119,22 @@
 
     <div class="max-w-4xl mx-auto px-4 md:px-8 mt-8"></div>
 
-    <div id="profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 p-4">
-        <div class="w-full max-w-xl rounded-[2rem] bg-white p-6 md:p-8 shadow-2xl relative">
-            <button id="profile-modal-close" type="button" class="absolute top-4 right-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
+    <div id="profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 p-4 overflow-y-auto">
+        <div class="w-full max-w-md rounded-[2rem] bg-white p-5 md:p-6 shadow-2xl relative mx-auto my-8 overflow-hidden">
+            <button id="profile-modal-close" type="button" class="absolute top-4 right-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
                 <span class="sr-only">Tutup</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 18 12-12m0 12L6 6"/></svg>
             </button>
-            <div class="mb-6">
-                <h2 class="text-xl font-bold text-gray-900">Edit Profil</h2>
-                <p class="text-sm text-gray-500 mt-2">Perbarui foto, telepon, dan lokasi Anda.</p>
+            <div class="mb-6 text-center">
+                <h2 class="text-lg font-bold text-gray-900">Edit Profil</h2>
+                <p class="text-sm text-gray-500 mt-2">Perbarui foto profil, background, telepon, dan lokasi Anda.</p>
             </div>
             <form method="post" enctype="multipart/form-data" class="grid gap-4">
                 {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2" for="id_cover_photo">Foto Background</label>
+                    {{ profile_form.cover_photo }}
+                </div>
                 {% if profile.photo %}
                 <div class="flex items-center gap-4">
                     <img src="{{ profile.photo.url }}" alt="Foto Profil" class="w-20 h-20 rounded-full object-cover border border-gray-200" />
@@ -179,7 +187,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg>
                 </a>
 
-                <button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <a href="{% url 'profil_notifikasi' %}" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-500 border border-gray-100"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></div>
                         <div class="text-left">
@@ -188,12 +196,14 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">2</span>
+                        {% if jumlah_notifikasi > 0 %}
+                        <span class="bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">{{ jumlah_notifikasi }}</span>
+                        {% endif %}
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg>
                     </div>
-                </button>
+                </a>
 
-                <button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <a href="{% url 'profil_privasi' %}" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-500 border border-gray-100"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 0v1a7 7 0 0 1-7 7v2h14v-2a7 7 0 0 1-7-7v-1"/></svg></div>
                         <div class="text-left">
@@ -202,9 +212,9 @@
                         </div>
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg>
-                </button>
+                </a>
 
-                <button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <a href="{% url 'profil_help' %}" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-500 border border-gray-100"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 11-12.728 12.728 9 9 0 0112.728-12.728zm-6.364 5.364h.01"/></svg></div>
                         <div class="text-left">
@@ -213,7 +223,7 @@
                         </div>
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/></svg>
-                </button>
+                </a>
             </div>
 
             <a href="/login" class="w-full mt-4 bg-red-50 text-red-500 font-bold p-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-red-100 transition-colors border border-red-100 shadow-sm">
@@ -266,61 +276,15 @@
                 </div>
             </div>
 
-            <div class="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
-                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-[#00B27A] text-white shadow-sm">Semua <span class="ml-1 bg-white/20 px-1.5 rounded-md">{{ total_reports }}</span></button>
-                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 shadow-sm">Menunggu <span class="ml-1 bg-gray-100 px-1.5 rounded-md">{{ pending_reports }}</span></button>
-                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 shadow-sm">Diproses <span class="ml-1 bg-gray-100 px-1.5 rounded-md">{{ processing_reports }}</span></button>
-                <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 shadow-sm">Selesai <span class="ml-1 bg-gray-100 px-1.5 rounded-md">{{ completed_reports }}</span></button>
+            <div class="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide" id="profile-filter-buttons">
+                <button type="button" data-status="all" class="filter-button whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold {% if filter_status == 'all' %}bg-[#00B27A] text-white{% else %}bg-white text-gray-600 border border-gray-200{% endif %} shadow-sm">Semua <span class="ml-1 {% if filter_status == 'all' %}bg-white/20{% else %}bg-gray-100{% endif %} px-1.5 rounded-md">{{ total_reports }}</span></button>
+                <button type="button" data-status="pending" class="filter-button whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold {% if filter_status == 'pending' %}bg-[#00B27A] text-white{% else %}bg-white text-gray-600 border border-gray-200{% endif %} shadow-sm">Menunggu <span class="ml-1 {% if filter_status == 'pending' %}bg-white/20{% else %}bg-gray-100{% endif %} px-1.5 rounded-md">{{ pending_reports }}</span></button>
+                <button type="button" data-status="diproses" class="filter-button whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold {% if filter_status == 'diproses' %}bg-[#00B27A] text-white{% else %}bg-white text-gray-600 border border-gray-200{% endif %} shadow-sm">Diproses <span class="ml-1 {% if filter_status == 'diproses' %}bg-white/20{% else %}bg-gray-100{% endif %} px-1.5 rounded-md">{{ processing_reports }}</span></button>
+                <button type="button" data-status="selesai" class="filter-button whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold {% if filter_status == 'selesai' %}bg-[#00B27A] text-white{% else %}bg-white text-gray-600 border border-gray-200{% endif %} shadow-sm">Selesai <span class="ml-1 {% if filter_status == 'selesai' %}bg-white/20{% else %}bg-gray-100{% endif %} px-1.5 rounded-md">{{ completed_reports }}</span></button>
             </div>
 
-            <div class="space-y-4">
-                {% for report in recent_reports %}
-                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex gap-4">
-                    <div class="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative">
-                        {% if report.gambar and report.gambar.0 %}
-                        <img src="{{ report.gambar_urls.0 }}" alt="{{ report.judul }}" class="w-full h-full object-cover" />
-                        {% else %}
-                        <img src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=200" alt="{{ report.judul }}" class="w-full h-full object-cover" />
-                        {% endif %}
-                        <div class="absolute bottom-1 right-1 bg-white/90 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
-                    </div>
-                    <div class="flex-1 min-w-0 flex flex-col">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="text-[10px] font-bold {% if report.status == 'selesai' %}text-green-600{% elif report.status == 'diproses' %}text-yellow-600{% else %}text-gray-600{% endif %} flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full {% if report.status == 'selesai' %}bg-green-500{% elif report.status == 'diproses' %}bg-yellow-500{% else %}bg-gray-500{% endif %}"></span>
-                                {% if report.status == 'selesai' %}Selesai{% elif report.status == 'diproses' %}Diproses{% else %}Menunggu{% endif %}
-                            </span>
-                            <span class="text-[10px] text-gray-400 font-semibold">{{ report.created_at|date:"d M Y" }}</span>
-                        </div>
-                        <h3 class="font-bold text-gray-800 text-sm leading-snug mb-1 line-clamp-1">{{ report.judul }}</h3>
-                        <p class="text-xs text-gray-500 line-clamp-1 mb-2">{{ report.lokasi_detail|default:"Lokasi tidak spesifik" }}</p>
-                        <div class="w-full h-1.5 bg-gray-100 rounded-full mt-auto overflow-hidden flex">
-                            <div class="h-full {% if report.status == 'selesai' %}bg-green-500{% elif report.status == 'diproses' %}bg-yellow-500{% else %}bg-blue-500{% endif %} w-full"></div>
-                        </div>
-                        <div class="flex items-center gap-4 mt-3">
-                            <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 116.364 6.364L12 15l-2.682-2.318a4.5 4.5 0 01-6.364-6.364z"/></svg> <span class="text-xs font-bold">{{ report.get_urgensi_display }}</span></div>
-                            <div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg> <span class="text-xs font-bold">{{ report.deskripsi|truncatechars:20 }}</span></div>
-                        </div>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="bg-gray-50 rounded-2xl p-8 text-center border border-gray-100">
-                    <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">Belum ada laporan</h3>
-                    <p class="text-sm text-gray-500 mb-4">Mulai buat laporan pertama Anda untuk membantu masyarakat</p>
-                    <a href="/lapor/" class="inline-flex items-center gap-2 bg-[#00B27A] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        Buat Laporan
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
+            {% include 'profil_report_cards.html' %}
+            {{ report_cards_json|json_script:"profileReportData" }}
         </div>
     </div>
 
@@ -329,27 +293,35 @@
             var menuAccountButton = document.getElementById('menu-account-settings');
             var modal = document.getElementById('profile-modal');
             var closeButton = document.getElementById('profile-modal-close');
-            if (!menuAccountButton || !modal || !closeButton) return;
 
-            function hideModal() {
-                modal.classList.add('hidden');
+            if (menuAccountButton && modal && closeButton) {
+                function hideModal() {
+                    modal.classList.add('hidden');
+                }
+
+                function showModal() {
+                    modal.classList.remove('hidden');
+                }
+
+                menuAccountButton.addEventListener('click', function () {
+                    showModal();
+                });
+
+                closeButton.addEventListener('click', hideModal);
+
+            var coverButton = document.getElementById('profile-cover-button');
+            if (coverButton) {
+                coverButton.addEventListener('click', function () {
+                    showModal();
+                });
             }
-
-            function showModal() {
-                modal.classList.remove('hidden');
-            }
-
-            menuAccountButton.addEventListener('click', function () {
-                showModal();
-            });
-
-            closeButton.addEventListener('click', hideModal);
 
             modal.addEventListener('click', function (event) {
                 if (event.target === modal) {
                     hideModal();
                 }
             });
+            }
 
             // Auto-hide success toast after 3 seconds
             var successToast = document.getElementById('success-toast');
@@ -357,6 +329,118 @@
                 setTimeout(function() {
                     successToast.style.display = 'none';
                 }, 3000);
+            }
+
+            var reportData = [];
+            var reportDataElement = document.getElementById('profileReportData');
+            if (reportDataElement) {
+                try {
+                    reportData = JSON.parse(reportDataElement.textContent || reportDataElement.innerText);
+                } catch (error) {
+                    console.error('Failed to parse report data:', error);
+                }
+            }
+
+            function escapeHtml(text) {
+                return String(text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function renderReportCards(reports) {
+                if (!reports.length) {
+                    return '<div class="bg-gray-50 rounded-2xl p-8 text-center border border-gray-100">' +
+                        '<div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2"/>' +
+                        '</svg>' +
+                        '</div>' +
+                        '<h3 class="text-lg font-bold text-gray-800 mb-2">Belum ada laporan</h3>' +
+                        '<p class="text-sm text-gray-500 mb-4">Mulai buat laporan pertama Anda untuk membantu masyarakat</p>' +
+                        '<a href="/lapor/" class="inline-flex items-center gap-2 bg-[#00B27A] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-700 transition">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>' +
+                        '</svg>' +
+                        'Buat Laporan</a>' +
+                        '</div>';
+                }
+
+                return reports.map(function(report) {
+                    var statusLabel = report.status === 'selesai' ? 'Selesai' : report.status === 'diproses' ? 'Diproses' : 'Menunggu';
+                    var statusColor = report.status === 'selesai' ? 'text-green-600' : report.status === 'diproses' ? 'text-yellow-600' : 'text-gray-600';
+                    var badgeColor = report.status === 'selesai' ? 'bg-green-500' : report.status === 'diproses' ? 'bg-yellow-500' : 'bg-gray-500';
+                    var barColor = report.status === 'selesai' ? 'bg-green-500' : report.status === 'diproses' ? 'bg-yellow-500' : 'bg-blue-500';
+                    var imageUrl = report.gambar_url || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=200';
+                    return '<div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex gap-4">' +
+                        '<div class="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative">' +
+                        '<img src="' + imageUrl + '" alt="' + report.judul.replace(/"/g, '&quot;') + '" class="w-full h-full object-cover" />' +
+                        '<div class="absolute bottom-1 right-1 bg-white/90 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>' +
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>' +
+                        '</svg></div></div>' +
+                        '<div class="flex-1 min-w-0 flex flex-col">' +
+                        '<div class="flex justify-between items-start mb-1">' +
+                        '<span class="text-[10px] font-bold ' + statusColor + ' flex items-center gap-1">' +
+                        '<span class="w-1.5 h-1.5 rounded-full ' + badgeColor + '"></span>' + statusLabel + '</span>' +
+                        '<span class="text-[10px] text-gray-400 font-semibold">' + escapeHtml(report.created_at) + '</span>' +
+                        '</div>' +
+                        '<h3 class="font-bold text-gray-800 text-sm leading-snug mb-1 line-clamp-1">' + escapeHtml(report.judul) + '</h3>' +
+                        '<p class="text-xs text-gray-500 line-clamp-1 mb-2">' + escapeHtml(report.lokasi_detail) + '</p>' +
+                        '<div class="w-full h-1.5 bg-gray-100 rounded-full mt-auto overflow-hidden flex">' +
+                        '<div class="h-full ' + barColor + ' w-full"></div>' +
+                        '</div>' +
+                        '<div class="flex items-center gap-4 mt-3">' +
+                        '<div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        '<path d="M4.318 6.318a4.5 4.5 0 116.364 6.364L12 15l-2.682-2.318a4.5 4.5 0 01-6.364-6.364z"/></svg> <span class="text-xs font-bold">' + escapeHtml(report.urgensi) + '</span></div>' +
+                        '<div class="flex items-center gap-1.5 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg> <span class="text-xs font-bold">' + escapeHtml(report.deskripsi.substring(0, 20)) + '</span></div>' +
+                        '</div></div></div>';
+                }).join('');
+            }
+
+            function updateFilterButtons(status) {
+                filterButtons.forEach(function(btn) {
+                    if (btn.dataset.status === status) {
+                        btn.classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-200');
+                        btn.classList.add('bg-[#00B27A]', 'text-white');
+                        var badge = btn.querySelector('span');
+                        if (badge) {
+                            badge.classList.remove('bg-gray-100');
+                            badge.classList.add('bg-white/20');
+                        }
+                    } else {
+                        btn.classList.add('bg-white', 'text-gray-600', 'border', 'border-gray-200');
+                        btn.classList.remove('bg-[#00B27A]', 'text-white');
+                        var badge = btn.querySelector('span');
+                        if (badge) {
+                            badge.classList.remove('bg-white/20');
+                            badge.classList.add('bg-gray-100');
+                        }
+                    }
+                });
+            }
+
+            var filterButtons = document.querySelectorAll('.filter-button');
+            var reportContainer = document.getElementById('report-list');
+            if (filterButtons.length && reportContainer) {
+                filterButtons.forEach(function(button) {
+                    button.addEventListener('click', function(event) {
+                        event.preventDefault();
+                        var status = button.dataset.status;
+                        var filteredReports = reportData;
+                        if (status !== 'all') {
+                            filteredReports = reportData.filter(function(report) {
+                                return report.status === status;
+                            });
+                        }
+                        reportContainer.innerHTML = renderReportCards(filteredReports);
+                        window.history.replaceState({}, '', window.location.pathname + '?status=' + encodeURIComponent(status));
+                        updateFilterButtons(status);
+                    });
+                });
             }
         });
     </script>
