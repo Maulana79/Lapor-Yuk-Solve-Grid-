@@ -137,7 +137,7 @@
                     <h2 class="text-xl font-bold text-gray-950">Laporan Terkini</h2>
                     <span class="inline-flex h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
                 </div>
-                <a href="/riwayat/" class="text-[#00B27A] text-sm font-semibold hover:underline">Lihat semua →</a>
+                <a href="/semua-laporan/" class="text-[#00B27A] text-sm font-semibold hover:underline">Lihat semua →</a>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {% for laporan in laporan_terbaru %}
@@ -160,6 +160,32 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 {{ laporan.lokasi_detail|default:"Lokasi tidak tersedia" }}
                             </p>
+                            <div class="flex items-center justify-between gap-3 mt-4 mb-3">
+                                <div class="inline-flex items-center gap-2 text-sm text-gray-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.682 4.318 12.682a4.5 4.5 0 010-6.364z"/></svg>
+                                    <span class="font-semibold text-gray-900 support-count">{{ laporan.support_count|default:0 }}</span>
+                                    <span class="text-xs text-gray-500">Dukungan</span>
+                                </div>
+                                {% if user.is_authenticated %}
+                                <button type="button" class="dukungan-button inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition {% if laporan.id in supported_ids %}bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-not-allowed{% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}" data-laporan-id="{{ laporan.id }}" {% if laporan.id in supported_ids %}disabled{% endif %}>
+                                    {% if laporan.id in supported_ids %}Sudah Didukung{% else %}Dukung Laporan Ini{% endif %}
+                                </button>
+                                {% else %}
+                                <a href="/login/" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition">
+                                    Dukung Laporan Ini
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% if laporan.status == 'selesai' and laporan.rating %}
+                            <div class="flex items-center gap-2 mt-2">
+                                <div class="flex items-center gap-1">
+                                    {% for i in "12345"|make_list %}
+                                    <span class="{% if forloop.counter <= laporan.rating %}text-yellow-400{% else %}text-gray-300{% endif %}">⭐</span>
+                                    {% endfor %}
+                                </div>
+                                <span class="text-sm text-gray-600">Rating: {{ laporan.rating }}/5</span>
+                            </div>
+                            {% endif %}
                         </div>
                         <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
                             <span class="text-xs text-gray-400">Dilaporkan: {% if laporan.is_anonim %}Anonim{% else %}{{ laporan.user.first_name|default:"Pengguna" }}{% endif %}</span>
@@ -176,7 +202,49 @@
                 {% endfor %}
             </div>
         </div>
-    </main> <div id="global-chatbot-region">
+    </main>
+
+    <script>
+        const laporanDukungButtons = document.querySelectorAll('.dukungan-button');
+        const csrfToken = '{{ csrf_token }}';
+
+        laporanDukungButtons.forEach((button) => {
+            button.addEventListener('click', async () => {
+                const laporanId = button.dataset.laporanId;
+                if (!laporanId) return;
+
+                try {
+                    const response = await fetch('/api/dukung/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                        },
+                        body: JSON.stringify({ laporan_id: laporanId }),
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        button.innerText = 'Sudah Didukung';
+                        button.disabled = true;
+                        button.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                        button.classList.add('bg-emerald-100', 'text-emerald-700', 'border', 'border-emerald-200', 'cursor-not-allowed');
+
+                        const countNode = button.closest('.p-5').querySelector('.support-count');
+                        if (countNode) {
+                            countNode.textContent = result.support_count;
+                        }
+                    } else {
+                        console.error(result.error || 'Gagal mendukung laporan');
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                }
+            });
+        });
+    </script>
+
+    <div id="global-chatbot-region">
         {% include 'includes/chatbot.html' %}
     </div>
 </body>

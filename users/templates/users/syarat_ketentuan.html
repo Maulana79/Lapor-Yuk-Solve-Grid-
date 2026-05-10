@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syarat & Ketentuan - LaporYuk!</title>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="{% static 'images/LaporYuk.svg' %}" alt="LaporYuk logo" class="w-8 h-8">
+                    <h1 class="text-xl font-bold text-gray-900">LaporYuk!</h1>
+                </div>
+                <a href="{% url 'login' %}" class="text-sm text-emerald-600 hover:text-emerald-500 font-medium">
+                    ← Kembali ke Login
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Syarat & Ketentuan</h1>
+            <p class="text-sm text-gray-600 mb-6">Terakhir diperbarui: {{ current_date|date:"d F Y" }}</p>
+
+            <div class="prose prose-sm max-w-none text-gray-700 space-y-6">
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">1. Penerimaan Syarat</h2>
+                    <p>Dengan mengakses dan menggunakan aplikasi LaporYuk!, Anda menerima dan menyetujui untuk terikat oleh syarat dan ketentuan yang tercantum di halaman ini. Jika Anda tidak setuju dengan salah satu ketentuan ini, maka Anda tidak diperkenankan untuk menggunakan aplikasi ini.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">2. Penggunaan Aplikasi</h2>
+                    <p>Aplikasi LaporYuk! adalah platform pelaporan masyarakat yang memungkinkan pengguna untuk:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Melaporkan masalah atau keluhan di lingkungan sekitar</li>
+                        <li>Melacak status laporan yang telah dibuat</li>
+                        <li>Mengakses informasi publik terkait pelaporan</li>
+                        <li>Berkomunikasi dengan pihak terkait melalui sistem notifikasi</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">3. Kewajiban Pengguna</h2>
+                    <p>Sebagai pengguna aplikasi, Anda setuju untuk:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Memberikan informasi yang akurat dan benar saat mendaftar</li>
+                        <li>Menggunakan aplikasi sesuai dengan tujuan yang dimaksudkan</li>
+                        <li>Tidak menyebarkan konten yang melanggar hukum atau merugikan pihak lain</li>
+                        <li>Menjaga kerahasiaan akun dan password Anda</li>
+                        <li>Melaporkan dengan jujur dan bertanggung jawab</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">4. Konten dan Pelaporan</h2>
+                    <p>Anda bertanggung jawab penuh atas konten yang Anda unggah atau laporkan melalui aplikasi ini. Kami berhak untuk:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Menghapus laporan yang tidak sesuai atau melanggar ketentuan</li>
+                        <li>Memblokir akun pengguna yang melanggar ketentuan</li>
+                        <li>Menggunakan informasi laporan untuk tujuan perbaikan dan pengembangan</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">5. Privasi dan Data</h2>
+                    <p>Kami menghormati privasi Anda. Data pribadi yang Anda berikan akan digunakan sesuai dengan:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Kebijakan Privasi LaporYuk!</li>
+                        <li>Undang-undang yang berlaku di Indonesia</li>
+                        <li>Tujuan pelayanan publik dan perbaikan layanan</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">6. Hak Kekayaan Intelektual</h2>
+                    <p>Aplikasi LaporYuk! dan semua konten di dalamnya adalah milik kami atau mitra kami. Anda tidak diperkenankan untuk:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Menyalin, mendistribusikan, atau memodifikasi aplikasi tanpa izin</li>
+                        <li>Menggunakan logo atau merek kami tanpa persetujuan tertulis</li>
+                        <li>Membuat aplikasi serupa yang meniru fungsi utama kami</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">7. Penolakan Jaminan</h2>
+                    <p>Aplikasi ini disediakan "sebagaimana adanya" tanpa jaminan apapun. Kami tidak bertanggung jawab atas:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Kerusakan atau kehilangan data</li>
+                        <li>Gangguan layanan yang tidak terduga</li>
+                        <li>Kesalahan dalam pemrosesan laporan</li>
+                        <li>Kerugian yang timbul dari penggunaan aplikasi</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">8. Pembatasan Tanggung Jawab</h2>
+                    <p>Tanggung jawab kami dibatasi pada upaya terbaik untuk menyediakan layanan yang baik. Kami tidak bertanggung jawab atas kerugian tidak langsung, khusus, atau konsekuensial yang mungkin timbul dari penggunaan aplikasi ini.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">9. Perubahan Syarat</h2>
+                    <p>Kami berhak untuk mengubah syarat dan ketentuan ini kapan saja. Perubahan akan diberitahukan melalui aplikasi atau email. Penggunaan berkelanjutan aplikasi setelah perubahan berarti Anda menerima syarat baru.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">10. Hukum yang Berlaku</h2>
+                    <p>Syarat dan ketentuan ini diatur oleh hukum yang berlaku di Republik Indonesia. Setiap perselisihan akan diselesaikan melalui pengadilan yang berwenang di Indonesia.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">11. Kontak Kami</h2>
+                    <p>Jika Anda memiliki pertanyaan tentang syarat dan ketentuan ini, silakan hubungi kami melalui:</p>
+                    <ul class="list-disc list-inside ml-4 space-y-1">
+                        <li>Email: support@lapor-yuk.id</li>
+                        <li>Website: www.lapor-yuk.vercel.app</li>
+                    </ul>
+                </section>
+
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <p class="text-sm text-gray-600 text-center">
+                    Terima kasih telah menggunakan LaporYuk! untuk membantu membangun masyarakat yang lebih baik.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-sm text-gray-500">
+                <p>&copy; 2026 LaporYuk!. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

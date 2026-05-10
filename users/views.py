@@ -3,6 +3,13 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.urls import reverse
+from django.conf import settings
+from datetime import datetime
 
 from profil.models import Profile
 
@@ -83,3 +90,95 @@ def change_password_view(request):
         'success_message': success_message,
         'error_message': error_message,
     })
+
+
+# --- VIEW UNTUK FORGOT PASSWORD ---
+def forgot_password_view(request):
+    """
+    Halaman untuk meminta reset password via email
+    """
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email__iexact=email)
+            # Generate token untuk reset password
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Buat link reset password
+            reset_link = request.build_absolute_uri(
+                reverse('reset_password', kwargs={'uidb64': uid, 'token': token})
+            )
+            
+            # Kirim email
+            subject = 'Reset Password LaporYuk!'
+            message = f"""
+            Halo {user.first_name or user.username},
+            
+            Anda telah meminta untuk mereset password. Klik link di bawah untuk membuat password baru:
+            
+            {reset_link}
+            
+            Link ini hanya berlaku selama 24 jam.
+            
+            Jika Anda tidak meminta reset password, abaikan email ini.
+            
+            Terima kasih,
+            Tim LaporYuk!
+            """
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            messages.success(request, 'Link reset password telah dikirim ke email Anda. Periksa inbox atau folder spam.')
+            return redirect('login')
+        except User.DoesNotExist:
+            # Jangan beritahu bahwa email tidak ada (security best practice)
+            messages.success(request, 'Jika email terdaftar, link reset password telah dikirim.')
+            return redirect('login')
+    
+    return render(request, 'users/forgot_password.html')
+
+
+def reset_password_view(request, uidb64, token):
+    """
+    Halaman untuk reset password dengan token
+    """
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+            
+            if new_password and new_password == confirm_password:
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, 'Password berhasil direset. Silakan login dengan password baru.')
+                return redirect('login')
+            else:
+                messages.error(request, 'Password dan konfirmasi tidak cocok.')
+        
+        return render(request, 'users/reset_password.html', {'uidb64': uidb64, 'token': token})
+    else:
+        messages.error(request, 'Link reset password tidak valid atau sudah kadaluarsa.')
+        return redirect('login')
+
+
+# --- VIEW UNTUK SYARAT DAN KETENTUAN ---
+def syarat_ketentuan_view(request):
+    """
+    Halaman untuk menampilkan syarat dan ketentuan aplikasi
+    """
+    context = {
+        'current_date': datetime.now(),
+    }
+    return render(request, 'users/syarat_ketentuan.html', context)
