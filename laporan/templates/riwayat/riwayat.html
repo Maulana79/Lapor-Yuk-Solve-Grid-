@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -6,144 +6,307 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Laporan - LaporYuk!</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" href="{% static 'images/LaporYuk.svg' %}">
+    <style>
+        .rating-stars {
+            display: inline-flex;
+            gap: 2px;
+        }
+        .rating-stars input {
+            display: none;
+        }
+        .rating-stars label {
+            cursor: pointer;
+            font-size: 20px;
+            color: #d1d5db;
+            transition: color 0.2s;
+        }
+        .rating-stars input:checked ~ label,
+        .rating-stars label:hover,
+        .rating-stars label:hover ~ label {
+            color: #fbbf24;
+        }
+        .rating-stars input:checked ~ label {
+            color: #f59e0b;
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-gray-50 pb-24">
     {% include 'includes/navbar.html' %}
     {% include 'includes/chatbot.html' %}
 
-    <div class="bg-gradient-to-r from-[#009465] to-[#00B27A] pt-8 pb-20 px-6 md:px-12 rounded-b-[2.5rem] shadow-sm">
-        <div class="max-w-5xl mx-auto">
-            <div class="flex items-center gap-3 mb-2">
-                <h1 class="text-3xl font-extrabold text-white tracking-tight">Riwayat Laporan</h1>
-                <span class="text-2xl">📋</span>
-            </div>
-            <p class="text-white/80 font-medium mb-8">Pantau semua laporan dan aktivitasmu selama sebulan terakhir</p>
-        </div>
-    </div>
-
-    <div class="max-w-5xl mx-auto px-6 md:px-12 -mt-10 relative z-10">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-gray-700">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-3xl font-bold text-gray-800">{{ total_laporan }}</h3>
-                    <span class="text-gray-400">📈</span>
-                </div>
-                <p class="text-xs text-gray-500 font-bold mb-2 uppercase">Total Laporan</p>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-red-500">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-3xl font-bold text-gray-800">{{ jumlah_menunggu }}</h3>
-                    <span class="text-red-400">⚠️</span>
-                </div>
-                <p class="text-xs text-gray-500 font-bold mb-2 uppercase">Menunggu</p>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-yellow-500">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-3xl font-bold text-gray-800">{{ jumlah_diproses }}</h3>
-                    <span class="text-yellow-500">⏳</span>
-                </div>
-                <p class="text-xs text-gray-500 font-bold mb-2 uppercase">Sedang Diproses</p>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 border-t-4 border-t-[#00B27A]">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-3xl font-bold text-gray-800">{{ jumlah_selesai }}</h3>
-                    <span class="text-[#00B27A]">✅</span>
-                </div>
-                <p class="text-xs text-gray-500 font-bold mb-2 uppercase">Selesai</p>
-            </div>
+    <div class="max-w-7xl mx-auto px-6 md:px-12 py-10">
+        <!-- Header -->
+        <div class="mb-8 rounded-3xl bg-emerald-600 p-6 shadow-sm">
+            <h1 class="text-3xl font-extrabold text-white mb-2">Riwayat Laporan Saya</h1>
+            <p class="text-sm text-white">Pantau status dan beri rating pada laporan Anda.</p>
         </div>
 
-        <div class="flex flex-col gap-3 mb-8">
-            <form method="get" class="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-                <div class="flex items-center bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
-                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input name="q" type="text" value="{{ query }}" placeholder="Cari laporan, lokasi, atau kategori..." class="w-full bg-transparent border-none outline-none text-gray-700 text-sm" />
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Laporan</p>
+                        <h3 class="text-3xl font-extrabold text-gray-950 mt-1">{{ total_laporan }}</h3>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-2xl">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
                 </div>
-                <select name="status" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#00B27A]/20">
-                    <option value=""{% if not status_filter %} selected{% endif %}>Semua Status</option>
-                    <option value="pending"{% if status_filter == 'pending' %} selected{% endif %}>Menunggu</option>
-                    <option value="diproses"{% if status_filter == 'diproses' %} selected{% endif %}>Sedang Diproses</option>
-                    <option value="selesai"{% if status_filter == 'selesai' %} selected{% endif %}>Selesai</option>
-                </select>
-                <div class="flex gap-3">
-                    <button type="submit" class="bg-[#00B27A] text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-[#009968] shadow-sm transition-colors">Terapkan</button>
-                    <button type="submit" name="sort" value="latest" class="px-5 py-3 rounded-xl font-bold text-sm transition-colors {% if sort == 'latest' or not sort %}bg-[#00B27A] text-white border border-[#00B27A] hover:bg-[#009968] shadow-md{% else %}bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 shadow-sm{% endif %}">Terbaru</button>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Menunggu</p>
+                        <h3 class="text-3xl font-extrabold text-red-600 mt-1">{{ jumlah_menunggu }}</h3>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-2xl">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Diproses</p>
+                        <h3 class="text-3xl font-extrabold text-amber-600 mt-1">{{ jumlah_diproses }}</h3>
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-2xl">
+                        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Selesai</p>
+                        <h3 class="text-3xl font-extrabold text-green-600 mt-1">{{ jumlah_selesai }}</h3>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-2xl">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <form method="GET" class="flex flex-col lg:flex-row gap-4">
+                <!-- Search -->
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Cari Laporan</label>
+                    <input type="text" name="q" value="{{ query }}" placeholder="Cari berdasarkan judul, deskripsi, atau lokasi..."
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+
+                <!-- Status Filter -->
+                <div class="lg:w-48">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">Semua Status</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Menunggu</option>
+                        <option value="diproses" {% if status_filter == 'diproses' %}selected{% endif %}>Diproses</option>
+                        <option value="selesai" {% if status_filter == 'selesai' %}selected{% endif %}>Selesai</option>
+                    </select>
+                </div>
+
+                <!-- Sort -->
+                <div class="lg:w-48">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Urutkan</label>
+                    <select name="sort" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="latest" {% if sort == 'latest' %}selected{% endif %}>Terbaru</option>
+                        <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Terlama</option>
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="lg:flex lg:items-end">
+                    <button type="submit" class="w-full lg:w-auto px-6 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">
+                        Filter
+                    </button>
                 </div>
             </form>
         </div>
 
-        <div class="flex justify-between items-center mb-6">
-            <p class="text-sm text-gray-500 font-medium">Menampilkan <span class="font-bold text-gray-800">{{ total_laporan }}</span> laporan</p>
-            <div class="flex items-center gap-1.5 text-sm font-bold text-[#00B27A]">
-                <span>📍</span>
-                <span>Data berasal dari server</span>
-            </div>
-        </div>
-
-        <div class="space-y-8">
+        <!-- Laporan List -->
+        {% if laporan_list %}
+        <div class="space-y-6">
             {% for laporan in laporan_list %}
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-5 hover:shadow-md transition-shadow">
-                <div class="relative w-full sm:w-40 h-40 sm:h-auto rounded-xl overflow-hidden shrink-0 bg-gray-100 flex items-center justify-center text-gray-400">
-                    {% if laporan.gambar %}
-                        <img src="{{ laporan.gambar_urls.0 }}" alt="{{ laporan.judul }}" class="w-full h-full object-cover" />
-                    {% else %}
-                        <div class="text-center px-4">
-                            <p class="text-sm font-semibold">Tidak ada gambar</p>
-                        </div>
-                    {% endif %}
-                    {% if laporan.gambar %}
-                    <div class="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm text-gray-800 px-2.5 py-1 rounded-md text-xs font-bold shadow-sm">
-                        {{ laporan.get_kategori_display }}
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="flex-1 flex flex-col">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full {% if laporan.status == 'pending' %}bg-red-500{% elif laporan.status == 'diproses' %}bg-yellow-500{% elif laporan.status == 'selesai' %}bg-green-500{% else %}bg-gray-400{% endif %}"></span>
-                            <span class="text-xs font-bold {% if laporan.status == 'pending' %}text-red-600{% elif laporan.status == 'diproses' %}text-yellow-600{% elif laporan.status == 'selesai' %}text-green-600{% else %}text-gray-600{% endif %}">{{ laporan.status|capfirst }}</span>
-                        </div>
-                        <span class="text-xs text-gray-400 font-medium flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="flex flex-col lg:flex-row">
+                    <!-- Image Section -->
+                    <div class="w-full lg:w-80 h-48 lg:h-auto bg-white-100 flex items-center justify-center p-4">
+                        {% if laporan.gambar|length > 0 %}
+                        <img src="{{ laporan.gambar_urls.0 }}" alt="{{ laporan.judul }}" class="w-full h-full object-cover rounded-2xl" />
+                        {% else %}
+                        <div class="text-center text-gray-400">
+                            <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
-                            {{ laporan.created_at|date:'d M Y' }}
-                        </span>
-                    </div>
-                    <h3 class="font-bold text-gray-800 text-lg leading-snug mb-2">{{ laporan.judul }}</h3>
-                    <div class="flex items-start gap-1.5 text-gray-500 text-sm mb-4">
-                        <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <span class="truncate">
-                            {% if laporan.lokasi_detail %}
-                                {{ laporan.lokasi_detail }}
-                            {% elif laporan.latitude and laporan.longitude %}
-                                {{ laporan.latitude|floatformat:4 }}, {{ laporan.longitude|floatformat:4 }}
-                            {% else %}
-                                Lokasi tidak tersedia
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-                        <div class="flex items-center gap-5 text-gray-400">
-                            <span class="text-xs font-bold">👍 {{ laporan.get_urgensi_display }}</span>
-                            <span class="text-xs font-bold">💬 {% if laporan.is_anonim %}Anonim{% else %}Publik{% endif %}</span>
+                            <p class="text-sm">Tidak ada gambar</p>
                         </div>
-                        <button class="text-xs font-bold text-[#00B27A] bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">Lihat Detail</button>
+                        {% endif %}
+                    </div>
+
+                    <!-- Content Section -->
+                    <div class="flex-1 p-6">
+                        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="inline-block px-3 py-1 bg-gray-50 text-[11px] font-semibold text-gray-600 border border-gray-200 rounded">
+                                        {{ laporan.get_kategori_display }}
+                                    </span>
+                                    <span class="inline-block px-3 py-1 {% if laporan.status == 'selesai' %}bg-green-50 text-green-700{% elif laporan.status == 'diproses' %}bg-amber-50 text-amber-700{% else %}bg-red-50 text-red-700{% endif %} text-[11px] font-semibold border border-current rounded">
+                                        {{ laporan.get_status_display }}
+                                    </span>
+                                    <span class="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-[11px] font-semibold border border-blue-200 rounded">
+                                        {{ laporan.get_urgensi_display }}
+                                    </span>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ laporan.judul }}</h3>
+                                <p class="text-gray-600 mb-3">{{ laporan.deskripsi }}</p>
+
+                                {% if laporan.lokasi_detail %}
+                                <div class="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    {{ laporan.lokasi_detail }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="text-sm text-gray-500">
+                                {{ laporan.created_at|date:'d M Y, H:i' }}
+                            </div>
+                        </div>
+
+                        <!-- Rating Section - Only show for completed reports -->
+                        {% if laporan.status == 'selesai' %}
+                        <div class="border-t border-gray-100 pt-4">
+                            <h4 class="text-sm font-semibold text-gray-900 mb-2">Beri Rating Kepuasan</h4>
+                            {% if laporan.rating %}
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-1">
+                                    {% for i in "12345"|make_list %}
+                                    <span class="{% if forloop.counter <= laporan.rating %}text-yellow-400{% else %}text-gray-300{% endif %}">⭐</span>
+                                    {% endfor %}
+                                </div>
+                                <span class="text-sm text-gray-600">Rating: {{ laporan.rating }}/5</span>
+                                <button onclick="editRating({{ laporan.id }})" class="text-xs text-emerald-600 hover:text-emerald-500 font-medium">
+                                    Ubah Rating
+                                </button>
+                            </div>
+                            {% else %}
+                            <form method="POST" action="{% url 'beri_rating' laporan.id %}" class="flex items-center gap-3">
+                                {% csrf_token %}
+                                <div class="rating-stars">
+                                    <input type="radio" id="star5-{{ laporan.id }}" name="rating" value="5" required>
+                                    <label for="star5-{{ laporan.id }}">⭐</label>
+                                    <input type="radio" id="star4-{{ laporan.id }}" name="rating" value="4">
+                                    <label for="star4-{{ laporan.id }}">⭐</label>
+                                    <input type="radio" id="star3-{{ laporan.id }}" name="rating" value="3">
+                                    <label for="star3-{{ laporan.id }}">⭐</label>
+                                    <input type="radio" id="star2-{{ laporan.id }}" name="rating" value="2">
+                                    <label for="star2-{{ laporan.id }}">⭐</label>
+                                    <input type="radio" id="star1-{{ laporan.id }}" name="rating" value="1">
+                                    <label for="star1-{{ laporan.id }}">⭐</label>
+                                </div>
+                                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors">
+                                    Beri Rating
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-            </div>
-            {% empty %}
-            <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-10 text-center">
-                <p class="text-gray-500">Belum ada laporan yang dikirim.</p>
             </div>
             {% endfor %}
         </div>
+
+        {% else %}
+        <!-- No Reports -->
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada laporan</h3>
+            <p class="mt-1 text-sm text-gray-500">Mulai buat laporan pertama Anda.</p>
+            <div class="mt-6">
+                <a href="/lapor/" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Buat Laporan Baru
+                </a>
+            </div>
+        </div>
+        {% endif %}
     </div>
+
+    <!-- Edit Rating Modal -->
+    <div id="editRatingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl max-w-md w-full p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Ubah Rating</h3>
+                <form id="editRatingForm" method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" id="editLaporanId" name="laporan_id">
+                    <div class="rating-stars">
+                        <input type="radio" id="edit-star5" name="rating" value="5" required>
+                        <label for="edit-star5">⭐</label>
+                        <input type="radio" id="edit-star4" name="rating" value="4">
+                        <label for="edit-star4">⭐</label>
+                        <input type="radio" id="edit-star3" name="rating" value="3">
+                        <label for="edit-star3">⭐</label>
+                        <input type="radio" id="edit-star2" name="rating" value="2">
+                        <label for="edit-star2">⭐</label>
+                        <input type="radio" id="edit-star1" name="rating" value="1">
+                        <label for="edit-star1">⭐</label>
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeEditRatingModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            Batal
+                        </button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function editRating(laporanId) {
+            document.getElementById('editLaporanId').value = laporanId;
+            document.getElementById('editRatingModal').classList.remove('hidden');
+        }
+
+        function closeEditRatingModal() {
+            document.getElementById('editRatingModal').classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('editRatingModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditRatingModal();
+            }
+        });
+    </script>
 </body>
 </html>

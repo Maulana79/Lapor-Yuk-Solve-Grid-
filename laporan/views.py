@@ -1,13 +1,15 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Avg, Q
+from django.db.models import Avg, Q, Count
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
+from django.core.cache import cache
 from django.conf import settings
-from .models import Pengaduan, Notifikasi
+from .models import Pengaduan, Notifikasi, Dukungan
 from profil.models import Profile
 import json
+import hashlib
 import os
 import uuid
 from google import genai
@@ -25,15 +27,19 @@ def beranda_view(request):
     profile, _ = Profile.objects.get_or_create(user=user)
     profile_location = profile.location or 'Lokasi belum tersedia'
     
-    # Get all laporan
-    laporan_list = Pengaduan.objects.all().order_by('-created_at')
-    
-    # Filter by kategori if provided
+# Get all laporan with support counts and default trending order
+    laporan_list = Pengaduan.objects.annotate(support_count=Count('dukungan'))
+
     if kategori_filter and kategori_filter != 'semua':
         laporan_list = laporan_list.filter(kategori=kategori_filter)
-    
+
+    laporan_list = laporan_list.order_by('-support_count', '-created_at')
+
     # Get 4 latest laporan for display
     laporan_terbaru = laporan_list[:4]
+    supported_ids = set()
+    if request.user.is_authenticated:
+        supported_ids = set(Dukungan.objects.filter(user=request.user, laporan__in=laporan_terbaru).values_list('laporan_id', flat=True))
     
     # Calculate statistics
     total_laporan = Pengaduan.objects.count()
@@ -57,6 +63,7 @@ def beranda_view(request):
         'tingkat_kepuasan': tingkat_kepuasan,
         'profile_name': profile_name,
         'profile_location': profile_location,
+        'supported_ids': supported_ids,
     })
 
 def lapor_view(request):
@@ -74,6 +81,58 @@ def pencarian_view(request):
     return render(request, 'laporan/hasil_pencarian.html', {
         'query': query,
         'hasil_laporan': hasil_laporan,
+    })
+
+def semua_laporan_view(request):
+    """
+    Halaman untuk melihat semua laporan dari semua user
+    """
+    query = request.GET.get('q', '').strip()
+    kategori_filter = request.GET.get('kategori', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    sort = request.GET.get('sort', 'latest').strip()
+
+    laporan_list = Pengaduan.objects.annotate(support_count=Count('dukungan'))
+
+    if query:
+        laporan_list = laporan_list.filter(
+            Q(judul__icontains=query) |
+            Q(deskripsi__icontains=query) |
+            Q(lokasi_detail__icontains=query)
+        )
+
+    if kategori_filter and kategori_filter != 'semua':
+        laporan_list = laporan_list.filter(kategori=kategori_filter)
+
+    if status_filter in ['pending', 'diproses', 'selesai']:
+        laporan_list = laporan_list.filter(status=status_filter)
+
+    if sort == 'oldest':
+        laporan_list = laporan_list.order_by('created_at')
+    elif sort == 'trending':
+        laporan_list = laporan_list.order_by('-support_count', '-created_at')
+    else:
+        laporan_list = laporan_list.order_by('-created_at')
+
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(laporan_list, 12)  # 12 laporan per halaman
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    supported_ids = set()
+    if request.user.is_authenticated:
+        supported_ids = set(Dukungan.objects.filter(user=request.user, laporan__in=page_obj.object_list).values_list('laporan_id', flat=True))
+
+    return render(request, 'laporan/semua_laporan.html', {
+        'page_obj': page_obj,
+        'query': query,
+        'kategori_filter': kategori_filter,
+        'status_filter': status_filter,
+        'sort': sort,
+        'kategori_choices': Pengaduan.KATEGORI_CHOICES,
+        'status_choices': [('pending', 'Menunggu'), ('diproses', 'Diproses'), ('selesai', 'Selesai')],
+        'supported_ids': supported_ids,
     })
 
 @login_required(login_url='/login/')
@@ -109,7 +168,31 @@ def riwayat_view(request):
         'status_filter': status_filter,
         'sort': sort,
     })
+@login_required(login_url='/login/')
+def beri_rating_view(request, laporan_id):
+    """
+    View untuk memberikan atau mengubah rating laporan
+    """
+    try:
+        laporan = Pengaduan.objects.get(id=laporan_id, user=request.user, status='selesai')
+    except Pengaduan.DoesNotExist:
+        messages.error(request, 'Laporan tidak ditemukan atau belum selesai diproses.')
+        return redirect('riwayat')
 
+    if request.method == 'POST':
+        rating = request.POST.get('rating')
+        if rating and rating.isdigit():
+            rating_value = int(rating)
+            if 1 <= rating_value <= 5:
+                laporan.rating = rating_value
+                laporan.save()
+                messages.success(request, 'Rating berhasil diberikan!')
+            else:
+                messages.error(request, 'Rating harus antara 1-5 bintang.')
+        else:
+            messages.error(request, 'Rating tidak valid.')
+
+    return redirect('riwayat')
 @csrf_exempt
 def api_pengaduan(request):
     if request.method == 'POST':
@@ -160,6 +243,39 @@ def api_pengaduan(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
+@login_required(login_url='/login/')
+def dukung_laporan(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            laporan_id = data.get('laporan_id')
+
+            if not laporan_id:
+                return JsonResponse({'success': False, 'error': 'laporan_id required'}, status=400)
+
+            try:
+                laporan = Pengaduan.objects.get(id=laporan_id)
+            except Pengaduan.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Laporan tidak ditemukan'}, status=404)
+
+            dukungan, created = Dukungan.objects.get_or_create(user=request.user, laporan=laporan)
+            support_count = laporan.dukungan.count()
+            message = 'Dukungan berhasil disimpan.' if created else 'Anda sudah mendukung laporan ini.'
+
+            return JsonResponse({
+                'success': True,
+                'supported': True,
+                'created': created,
+                'support_count': support_count,
+                'message': message,
+            })
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'JSON tidak valid'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
 
 @login_required(login_url='/login/')
 def mark_notifikasi_read(request, notif_id):
@@ -185,6 +301,13 @@ def chatbot_api(request):
             if not pesan_user:
                 return JsonResponse({'success': False, 'error': 'Pesan kosong'})
 
+            normalized_question = pesan_user.strip()
+            cache_key = 'chatbot_response:' + hashlib.sha256(normalized_question.encode('utf-8')).hexdigest()
+            cached_response = cache.get(cache_key)
+
+            if cached_response:
+                return JsonResponse({'success': True, 'balasan': cached_response, 'cached': True})
+
             # Inisialisasi client baru
             client = genai.Client(api_key=settings.GEMINI_API_KEY)
             
@@ -208,6 +331,7 @@ def chatbot_api(request):
                 contents=prompt_system # Kirim langsung pesan user-nya
             )
             
+            cache.set(cache_key, response.text, timeout=60 * 60 * 24)
             return JsonResponse({'success': True, 'balasan': response.text})
             
         except Exception as e:

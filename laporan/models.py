@@ -29,6 +29,12 @@ class Pengaduan(models.Model):
         (5, '⭐⭐⭐⭐⭐'),
     ]
 
+    STATUS_CHOICES = [
+        ('pending', 'Menunggu'),
+        ('diproses', 'Diproses'),
+        ('selesai', 'Selesai'),
+    ]
+
     judul = models.CharField(max_length=100)
     deskripsi = models.TextField()
     kategori = models.CharField(max_length=20, choices=KATEGORI_CHOICES)
@@ -40,7 +46,7 @@ class Pengaduan(models.Model):
     is_anonim = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     rating = models.IntegerField(choices=RATING_CHOICES, null=True, blank=True)  # Kepuasan (1-5)
 
     @property
@@ -61,6 +67,19 @@ class Pengaduan(models.Model):
 
     def __str__(self):
         return self.judul
+
+
+class Dukungan(models.Model):
+    laporan = models.ForeignKey(Pengaduan, on_delete=models.CASCADE, related_name='dukungan')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dukungan')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('laporan', 'user')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Dukungan oleh {self.user.username} untuk {self.laporan.judul[:40]}"
 
 
 class Notifikasi(models.Model):
