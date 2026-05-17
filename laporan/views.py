@@ -1,7 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg, Q, Count
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.core.cache import cache
@@ -290,6 +291,27 @@ def mark_notifikasi_read(request, notif_id):
         return JsonResponse({'success': True, 'message': 'Notifikasi ditandai sebagai dibaca'})
     except Notifikasi.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Notifikasi tidak ditemukan'}, status=404)
+
+
+@login_required(login_url='/login/')
+def notifikasi_status(request):
+    """
+    API endpoint sederhana untuk mengambil jumlah notifikasi belum dibaca
+    dan daftar notifikasi terbaru (maks 10) dalam format JSON.
+    """
+    notifikasi_qs = Notifikasi.objects.filter(penerima=request.user, is_read=False).order_by('-tanggal_dibuat')[:10]
+    notifikasi_list = []
+    for n in notifikasi_qs:
+        notifikasi_list.append({
+            'id': n.id,
+            'pesan': n.pesan,
+            'tanggal_dibuat': n.tanggal_dibuat.isoformat(),
+        })
+
+    return JsonResponse({
+        'jumlah_notifikasi': notifikasi_qs.count(),
+        'notifikasi': notifikasi_list,
+    })
 
 
 def chatbot_api(request):

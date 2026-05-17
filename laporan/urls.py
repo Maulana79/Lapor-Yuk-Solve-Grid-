@@ -11,5 +11,6 @@ urlpatterns = [
     path('api/pengaduan/', views.api_pengaduan, name='api_pengaduan'),
     path('api/dukung/', views.dukung_laporan, name='dukung_laporan'),
     path('api/notifikasi/<int:notif_id>/read/', views.mark_notifikasi_read, name='mark_notifikasi_read'),
+    path('api/notifikasi/status/', views.notifikasi_status, name='notifikasi_status'),
     path('api/chatbot/', views.chatbot_api, name='chatbot_api'),
 ]

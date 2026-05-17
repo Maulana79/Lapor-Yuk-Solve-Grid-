@@ -421,7 +421,7 @@
     </div>
 
     <!-- Bottom Action Bar -->
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 md:px-12 z-40">
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 md:px-12" style="z-index:1100;">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
             <button onclick="handleBack()" class="px-5 py-3 text-gray-500 font-semibold rounded-xl hover:bg-gray-50 flex items-center gap-2 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -457,6 +457,7 @@
 
     <script>
         let currentStep = 1;
+        let isSubmitting = false;
         let selectedCategory = '';
         let selectedUrgensi = '';
         let isAnonim = false;
@@ -508,13 +509,22 @@
                 nextBtn.innerHTML = 'Lanjutkan <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
                 skipBtn.classList.add('hidden');
             } else if (currentStep === 2) {
+                nextBtn.disabled = false;
                 nextBtn.innerHTML = 'Lanjutkan <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
                 skipBtn.classList.remove('hidden');
             } else if (currentStep === 4) {
+                nextBtn.disabled = false;
                 nextBtn.innerHTML = 'Tinjau Laporan';
             } else if (currentStep === 5) {
-                nextBtn.innerHTML = 'Kirim Laporan';
+                nextBtn.disabled = isSubmitting;
+                nextBtn.innerHTML = isSubmitting ? 'Mengirim...' : 'Kirim Laporan';
+                if (isSubmitting) {
+                    nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
             } else {
+                nextBtn.disabled = false;
                 nextBtn.innerHTML = 'Lanjutkan <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
                 skipBtn.classList.add('hidden');
             }
@@ -581,6 +591,10 @@
         }
 
         function handleNext() {
+            if (currentStep === 5 && isSubmitting) {
+                return;
+            }
+
             if (currentStep < 5) {
                 currentStep++;
                 showStep(currentStep);
@@ -703,12 +717,44 @@
         }
 
         function submitLaporan() {
+            const title = document.getElementById('judul').value.trim();
+            const description = document.getElementById('deskripsi').value.trim();
+            const locationDetail = document.getElementById('lokasi-detail').value.trim();
+
+            if (!title) {
+                alert('Judul laporan tidak boleh kosong.');
+                return;
+            }
+            if (!description) {
+                alert('Deskripsi laporan tidak boleh kosong.');
+                return;
+            }
+            if (!selectedCategory) {
+                alert('Silakan pilih kategori laporan.');
+                return;
+            }
+            if (!selectedUrgensi) {
+                alert('Silakan pilih tingkat urgensi laporan.');
+                return;
+            }
+            if (!locationDetail && !selectedLocation) {
+                alert('Silakan tentukan lokasi laporan.');
+                return;
+            }
+
+            if (isSubmitting) {
+                return;
+            }
+
+            isSubmitting = true;
+            updateButtons();
+
             const formData = new FormData();
-            formData.append('judul', document.getElementById('judul').value);
-            formData.append('deskripsi', document.getElementById('deskripsi').value);
+            formData.append('judul', title);
+            formData.append('deskripsi', description);
             formData.append('kategori', selectedCategory);
             formData.append('urgensi', selectedUrgensi);
-            formData.append('lokasi_detail', document.getElementById('lokasi-detail').value);
+            formData.append('lokasi_detail', locationDetail);
             if (selectedLocation) {
                 formData.append('latitude', selectedLocation.lat);
                 formData.append('longitude', selectedLocation.lng);
@@ -738,6 +784,10 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('Terjadi kesalahan saat mengirim laporan.');
+            })
+            .finally(() => {
+                isSubmitting = false;
+                updateButtons();
             });
         }
 

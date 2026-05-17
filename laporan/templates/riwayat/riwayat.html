@@ -10,24 +10,36 @@
     <style>
         .rating-stars {
             display: inline-flex;
-            gap: 2px;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
         }
         .rating-stars input {
             display: none;
         }
         .rating-stars label {
             cursor: pointer;
-            font-size: 20px;
-            color: #d1d5db;
-            transition: color 0.2s;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 28px;
+            color: #64748b;
+            transition: color 0.2s ease;
         }
-        .rating-stars input:checked ~ label,
-        .rating-stars label:hover,
-        .rating-stars label:hover ~ label {
-            color: #fbbf24;
+        .rating-stars label span.star {
+            color: #64748b !important;
+            transition: color 0.2s ease;
         }
-        .rating-stars input:checked ~ label {
-            color: #f59e0b;
+        .rating-stars label span.value {
+            font-size: 12px;
+            color: #475569;
+        }
+        .rating-stars label:hover span.star {
+            color: #fbbf24 !important;
+        }
+        .rating-stars label.active span.star {
+            color: #f59e0b !important;
         }
     </style>
 </head>
@@ -202,11 +214,11 @@
                             <div class="flex items-center gap-3">
                                 <div class="flex items-center gap-1">
                                     {% for i in "12345"|make_list %}
-                                    <span class="{% if forloop.counter <= laporan.rating %}text-yellow-400{% else %}text-gray-300{% endif %}">⭐</span>
+                                    <span class="{% if forloop.counter <= laporan.rating %}text-yellow-400{% else %}text-gray-300{% endif %}">★</span>
                                     {% endfor %}
                                 </div>
                                 <span class="text-sm text-gray-600">Rating: {{ laporan.rating }}/5</span>
-                                <button onclick="editRating({{ laporan.id }})" class="text-xs text-emerald-600 hover:text-emerald-500 font-medium">
+                                <button onclick="editRating({{ laporan.id }}, {{ laporan.rating|default:0 }})" class="text-xs text-emerald-600 hover:text-emerald-500 font-medium">
                                     Ubah Rating
                                 </button>
                             </div>
@@ -214,16 +226,31 @@
                             <form method="POST" action="{% url 'beri_rating' laporan.id %}" class="flex items-center gap-3">
                                 {% csrf_token %}
                                 <div class="rating-stars">
-                                    <input type="radio" id="star5-{{ laporan.id }}" name="rating" value="5" required>
-                                    <label for="star5-{{ laporan.id }}">⭐</label>
-                                    <input type="radio" id="star4-{{ laporan.id }}" name="rating" value="4">
-                                    <label for="star4-{{ laporan.id }}">⭐</label>
-                                    <input type="radio" id="star3-{{ laporan.id }}" name="rating" value="3">
-                                    <label for="star3-{{ laporan.id }}">⭐</label>
-                                    <input type="radio" id="star2-{{ laporan.id }}" name="rating" value="2">
-                                    <label for="star2-{{ laporan.id }}">⭐</label>
-                                    <input type="radio" id="star1-{{ laporan.id }}" name="rating" value="1">
-                                    <label for="star1-{{ laporan.id }}">⭐</label>
+                                    <label data-value="1">
+                                        <input type="radio" id="star1-{{ laporan.id }}" name="rating" value="1" required>
+                                        <span class="star">★</span>
+                                        <span class="value">1</span>
+                                    </label>
+                                    <label data-value="2">
+                                        <input type="radio" id="star2-{{ laporan.id }}" name="rating" value="2">
+                                        <span class="star">★</span>
+                                        <span class="value">2</span>
+                                    </label>
+                                    <label data-value="3">
+                                        <input type="radio" id="star3-{{ laporan.id }}" name="rating" value="3">
+                                        <span class="star">★</span>
+                                        <span class="value">3</span>
+                                    </label>
+                                    <label data-value="4">
+                                        <input type="radio" id="star4-{{ laporan.id }}" name="rating" value="4">
+                                        <span class="star">★</span>
+                                        <span class="value">4</span>
+                                    </label>
+                                    <label data-value="5">
+                                        <input type="radio" id="star5-{{ laporan.id }}" name="rating" value="5">
+                                        <span class="star">★</span>
+                                        <span class="value">5</span>
+                                    </label>
                                 </div>
                                 <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors">
                                     Beri Rating
@@ -267,16 +294,31 @@
                     {% csrf_token %}
                     <input type="hidden" id="editLaporanId" name="laporan_id">
                     <div class="rating-stars">
-                        <input type="radio" id="edit-star5" name="rating" value="5" required>
-                        <label for="edit-star5">⭐</label>
-                        <input type="radio" id="edit-star4" name="rating" value="4">
-                        <label for="edit-star4">⭐</label>
-                        <input type="radio" id="edit-star3" name="rating" value="3">
-                        <label for="edit-star3">⭐</label>
-                        <input type="radio" id="edit-star2" name="rating" value="2">
-                        <label for="edit-star2">⭐</label>
-                        <input type="radio" id="edit-star1" name="rating" value="1">
-                        <label for="edit-star1">⭐</label>
+                        <label data-value="1">
+                            <input type="radio" id="edit-star1" name="rating" value="1" required>
+                            <span class="star">★</span>
+                            <span class="value">1</span>
+                        </label>
+                        <label data-value="2">
+                            <input type="radio" id="edit-star2" name="rating" value="2">
+                            <span class="star">★</span>
+                            <span class="value">2</span>
+                        </label>
+                        <label data-value="3">
+                            <input type="radio" id="edit-star3" name="rating" value="3">
+                            <span class="star">★</span>
+                            <span class="value">3</span>
+                        </label>
+                        <label data-value="4">
+                            <input type="radio" id="edit-star4" name="rating" value="4">
+                            <span class="star">★</span>
+                            <span class="value">4</span>
+                        </label>
+                        <label data-value="5">
+                            <input type="radio" id="edit-star5" name="rating" value="5">
+                            <span class="star">★</span>
+                            <span class="value">5</span>
+                        </label>
                     </div>
                     <div class="flex gap-3">
                         <button type="button" onclick="closeEditRatingModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
@@ -292,14 +334,49 @@
     </div>
 
     <script>
-        function editRating(laporanId) {
+        const editRatingForm = document.getElementById('editRatingForm');
+        const ratingUrlTemplate = "{% url 'beri_rating' 0 %}";
+
+        function editRating(laporanId, currentRating) {
             document.getElementById('editLaporanId').value = laporanId;
+            if (editRatingForm) {
+                editRatingForm.action = ratingUrlTemplate.replace('/0/', `/${laporanId}/`);
+                editRatingForm.querySelectorAll('input[name="rating"]').forEach(function(radio) {
+                    radio.checked = Number(radio.value) === Number(currentRating);
+                });
+                var container = editRatingForm.querySelector('.rating-stars');
+                if (container) {
+                    updateRatingVisuals(container);
+                }
+            }
             document.getElementById('editRatingModal').classList.remove('hidden');
         }
 
         function closeEditRatingModal() {
             document.getElementById('editRatingModal').classList.add('hidden');
         }
+
+        function updateRatingVisuals(container) {
+            var checked = container.querySelector('input[type="radio"][name="rating"]:checked');
+            var selectedValue = checked ? Number(checked.value) : 0;
+            container.querySelectorAll('label[data-value]').forEach(function(label) {
+                var value = Number(label.getAttribute('data-value'));
+                label.classList.toggle('active', value <= selectedValue);
+            });
+        }
+
+        function initRatingStars() {
+            document.querySelectorAll('.rating-stars').forEach(function(container) {
+                container.querySelectorAll('input[type="radio"][name="rating"]').forEach(function(radio) {
+                    radio.addEventListener('change', function() {
+                        updateRatingVisuals(container);
+                    });
+                });
+                updateRatingVisuals(container);
+            });
+        }
+
+        initRatingStars();
 
         // Close modal when clicking outside
         document.getElementById('editRatingModal').addEventListener('click', function(e) {
