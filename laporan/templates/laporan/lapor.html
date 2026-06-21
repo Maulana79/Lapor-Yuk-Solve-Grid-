@@ -717,6 +717,21 @@
         }
 
         function submitLaporan() {
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
             const title = document.getElementById('judul').value.trim();
             const description = document.getElementById('deskripsi').value.trim();
             const locationDetail = document.getElementById('lokasi-detail').value.trim();
@@ -765,10 +780,15 @@
                 }
             }
             formData.append('is_anonim', isAnonim);
+            const csrfToken = getCookie('csrftoken');
 
             fetch('/api/pengaduan/', {
                 method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
                 body: formData,
+                credentials: 'same-origin',
             })
             .then(response => response.json().then(data => ({ ok: response.ok, status: response.status, data })))
             .then(result => {

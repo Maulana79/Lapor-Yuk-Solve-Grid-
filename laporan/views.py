@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg, Q, Count
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -14,6 +13,36 @@ import hashlib
 import os
 import uuid
 from google import genai
+
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR') or ''
+
+
+def is_same_origin_request(request):
+    origin = request.headers.get('Origin')
+    if origin:
+        allowed_origin = f"{request.scheme}://{request.get_host()}"
+        if origin != allowed_origin:
+            return False
+    return True
+
+
+def rate_limit_request(request, cache_key_prefix, max_requests=20, window_seconds=60):
+    ip = get_client_ip(request)
+    if not ip:
+        return False
+
+    cache_key = f"{cache_key_prefix}:{ip}"
+    count = cache.get(cache_key, 0)
+    if count >= max_requests:
+        return False
+    cache.set(cache_key, count + 1, timeout=window_seconds)
+    return True
+
 
 @login_required(login_url='/login/')
 def beranda_view(request):
@@ -194,9 +223,14 @@ def beri_rating_view(request, laporan_id):
             messages.error(request, 'Rating tidak valid.')
 
     return redirect('riwayat')
-@csrf_exempt
 def api_pengaduan(request):
     if request.method == 'POST':
+        if not is_same_origin_request(request):
+            return JsonResponse({'success': False, 'message': 'Origin tidak diizinkan'}, status=403)
+
+        if not rate_limit_request(request, 'api_pengaduan', max_requests=15, window_seconds=60):
+            return JsonResponse({'success': False, 'message': 'Terlalu banyak permintaan, coba lagi nanti.'}, status=429)
+
         try:
             judul = request.POST.get('judul')
             deskripsi = request.POST.get('deskripsi')
@@ -316,6 +350,12 @@ def notifikasi_status(request):
 
 def chatbot_api(request):
     if request.method == 'POST':
+        if not is_same_origin_request(request):
+            return JsonResponse({'success': False, 'error': 'Origin tidak diizinkan'}, status=403)
+
+        if not rate_limit_request(request, 'chatbot_api', max_requests=20, window_seconds=60):
+            return JsonResponse({'success': False, 'error': 'Terlalu banyak permintaan, coba lagi nanti.'}, status=429)
+
         try:
             data = json.loads(request.body)
             pesan_user = data.get('pesan')
