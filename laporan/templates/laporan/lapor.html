@@ -324,17 +324,6 @@
                                 <p class="text-xs text-gray-500">Mendesak, berpotensi bahaya jika dibiarkan</p>
                             </div>
                         </button>
-                        <button onclick="selectUrgensi('darurat')" class="urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border bg-red-50 border-red-200 hover:border-red-300 transition-all" data-id="darurat">
-                            <div class="mt-0.5 text-red-500">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-bold mb-1 text-red-500">Darurat</h4>
-                                <p class="text-xs text-gray-500">Sangat berbahaya, butuh penanganan segera</p>
-                            </div>
-                        </button>
                     </div>
                 </div>
                 <div class="flex items-center justify-between bg-gray-50 p-5 rounded-2xl border border-gray-100">
@@ -571,7 +560,7 @@
             const buttons = document.querySelectorAll('.urgensi-btn');
             buttons.forEach(btn => {
                 if (btn.dataset.id === id) {
-                    btn.className = `urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border transition-all ${id === 'darurat' ? 'bg-red-50 border-red-500' : id === 'tinggi' ? 'bg-orange-50/50 border-orange-400' : id === 'sedang' ? 'bg-yellow-50/50 border-yellow-400' : 'bg-gray-50 border-gray-400'}`;
+                    btn.className = `urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border transition-all ${id === 'tinggi' ? 'bg-orange-50/50 border-orange-400' : id === 'sedang' ? 'bg-yellow-50/50 border-yellow-400' : 'bg-gray-50 border-gray-400'}`;
                 } else {
                     btn.className = 'urgensi-btn flex items-start gap-4 p-4 rounded-xl text-left border bg-white border-gray-200 hover:border-gray-300 transition-all';
                 }
@@ -889,26 +878,29 @@
                 });
 
                 // Handle map click
-                map.on('click', function(e) {
+                map.on('click', async function(e) {
                     const clickLat = e.latlng.lat;
                     const clickLng = e.latlng.lng;
-                    
-                    // Check if clicked location has nearby reports with same category
-                    checkNearbyDuplicates(clickLat, clickLng, function(hasDuplicates) {
-                        if (hasDuplicates) {
-                            showAlertModal('Area ini sudah ada laporan dari kategori yang sama dalam radius 100m. Silakan pilih lokasi lain atau ganti kategori laporan.', 'info');
-                            return;
-                        }
-                        
-                        if (marker) {
-                            map.removeLayer(marker);
-                        }
-                        marker = L.marker([clickLat, clickLng]).addTo(map);
-                        selectedLocation = { lat: clickLat, lng: clickLng };
 
-                        // Reverse geocode to get address
-                        reverseGeocode(clickLat, clickLng);
-                    });
+                    if (!selectedCategory) {
+                        showAlertModal('Pilih kategori laporan terlebih dahulu sebelum memilih lokasi.', 'info');
+                        return;
+                    }
+
+                    const hasDuplicates = await checkNearbyDuplicates(clickLat, clickLng);
+                    if (hasDuplicates) {
+                        showAlertModal('Area ini sudah ada laporan dari kategori yang sama dalam radius 100m. Silakan pilih lokasi lain atau ganti kategori laporan.', 'info');
+                        return;
+                    }
+
+                    if (marker) {
+                        map.removeLayer(marker);
+                    }
+                    marker = L.marker([clickLat, clickLng]).addTo(map);
+                    selectedLocation = { lat: clickLat, lng: clickLng };
+
+                    // Reverse geocode to get address
+                    reverseGeocode(clickLat, clickLng);
                 });
             }
             updateStepper();
@@ -916,6 +908,17 @@
 
         // Search address using Nominatim API
         async function loadNearbyReports() {
+            const categoryColors = {
+                jalan: '#f97316',
+                sampah: '#10b981',
+                lampu: '#3b82f6',
+                banjir: '#0ea5e9',
+                pohon: '#22c55e',
+                listrik: '#f59e0b',
+                kebakaran: '#ef4444',
+                lainnya: '#6b7280',
+            };
+
             try {
                 const response = await fetch('/api/all-reports/');
                 const data = await response.json();
@@ -926,21 +929,26 @@
                             return;
                         }
 
+                        const strokeColor = categoryColors[report.kategori_key] || '#ef4444';
+                        const fillColor = `${strokeColor}40`; // translucent fill
+
                         const circle = L.circle([report.latitude, report.longitude], {
                             radius: 100, // 100 meters
-                            color: '#ef4444',
-                            fillColor: '#fecaca',
+                            color: strokeColor,
+                            fillColor: fillColor,
                             fillOpacity: 0.2,
                             weight: 2,
-                            dashArray: '5, 5'
+                            dashArray: '5, 5',
+                            interactive: false,
                         }).addTo(map);
                         
-                        circle.bindPopup(`
+                        circle.bindTooltip(`
                             <div class="text-center p-2">
                                 <h4 class="font-bold text-gray-800 text-sm mb-1">${report.judul}</h4>
-                                <span class="text-xs font-bold text-red-600">Zona Laporan (100m)</span>
+                                <span class="text-xs font-bold" style="color: ${strokeColor};">${report.kategori}</span>
+                                <div class="text-xs text-gray-500 mt-1">Zona kategori 100m</div>
                             </div>
-                        `);
+                        `, { direction: 'top', opacity: 0.9, permanent: false, interactive: false });
                     });
                 }
             } catch (error) {
@@ -948,18 +956,20 @@
             }
         }
 
-        async function checkNearbyDuplicates(lat, lng, callback) {
+        async function checkNearbyDuplicates(lat, lng) {
             try {
-                const categoryParam = selectedCategory ? `&kategori=${encodeURIComponent(selectedCategory)}` : '';
+                const categoryParam = selectedCategory ? `&kategori_key=${encodeURIComponent(selectedCategory)}` : '';
                 const response = await fetch(`/api/nearby-reports/?lat=${lat}&lng=${lng}${categoryParam}`);
                 const data = await response.json();
-                
-                // If there are nearby reports in the same category, consider it as duplicate
-                const hasDuplicates = data.success && data.count > 0;
-                callback(hasDuplicates);
+
+                const sameCategoryReports = (data.success && Array.isArray(data.reports))
+                    ? data.reports.filter(report => report.kategori_key === selectedCategory || report.kategori === selectedCategory)
+                    : [];
+
+                return sameCategoryReports.length > 0;
             } catch (error) {
                 console.error('Error checking duplicates:', error);
-                callback(false);
+                return false;
             }
         }
 

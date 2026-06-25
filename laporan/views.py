@@ -470,21 +470,32 @@ def chatbot_api(request):
 def nearby_reports(request):
     """
     Get all reports within 100m radius of given coordinates.
-    Only return reports in the same category when kategori is provided.
+    Only return reports in the same category when kategori_key or kategori is provided.
     """
     try:
         latitude = float(request.GET.get('lat', 0))
         longitude = float(request.GET.get('lng', 0))
+        kategori_key_filter = request.GET.get('kategori_key', '').strip()
         kategori_filter = request.GET.get('kategori', '').strip()
-        
+
         if latitude == 0 or longitude == 0:
             return JsonResponse({'success': False, 'reports': []}, status=400)
-        
+
+        # Normalize category from display name if necessary
+        category_mappings = {key: key for key, _ in Pengaduan.KATEGORI_CHOICES}
+        category_display_map = {display.lower(): key for key, display in Pengaduan.KATEGORI_CHOICES}
+
+        if kategori_filter and not kategori_key_filter:
+            lower_filter = kategori_filter.lower()
+            if lower_filter in category_mappings:
+                kategori_key_filter = lower_filter
+            elif lower_filter in category_display_map:
+                kategori_key_filter = category_display_map[lower_filter]
+
         # Convert 100 meters to approximate degrees (1 degree ≈ 111km at equator)
         # 100m ≈ 0.0009 degrees
         radius_degrees = 0.0009
-        
-        # Query nearby reports
+
         nearby = Pengaduan.objects.filter(
             latitude__gte=latitude - radius_degrees,
             latitude__lte=latitude + radius_degrees,
@@ -492,9 +503,9 @@ def nearby_reports(request):
             longitude__lte=longitude + radius_degrees,
         ).exclude(latitude__isnull=True, longitude__isnull=True)
 
-        if kategori_filter:
-            nearby = nearby.filter(kategori=kategori_filter)
-        
+        if kategori_key_filter:
+            nearby = nearby.filter(kategori=kategori_key_filter)
+
         reports_data = []
         for laporan in nearby:
             reports_data.append({
@@ -504,8 +515,9 @@ def nearby_reports(request):
                 'longitude': float(laporan.longitude) if laporan.longitude else None,
                 'status': laporan.status,
                 'kategori': laporan.kategori,
+                'kategori_key': laporan.kategori,
             })
-        
+
         return JsonResponse({
             'success': True,
             'reports': reports_data,
@@ -530,6 +542,8 @@ def all_reports(request):
                 'latitude': float(laporan.latitude) if laporan.latitude else None,
                 'longitude': float(laporan.longitude) if laporan.longitude else None,
                 'status': laporan.status,
+                'kategori': laporan.get_kategori_display(),
+                'kategori_key': laporan.kategori,
             })
 
         return JsonResponse({
