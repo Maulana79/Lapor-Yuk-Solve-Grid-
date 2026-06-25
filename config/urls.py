@@ -25,6 +25,9 @@ urlpatterns = [
     path('', include('laporan.urls')), # Menghubungkan URL laporan
     path('', include('peta.urls')), # Menghubungkan URL peta
     path('profil/', include('profil.urls')), # Menghubungkan URL profil
+    
+    # --- ROUTING UNTUK GOOGLE AUTH / ALLAUTH ---
+    path('accounts/', include('allauth.urls')),
 ]
 
 if settings.DEBUG:

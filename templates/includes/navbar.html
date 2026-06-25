@@ -27,34 +27,49 @@
                 </div>
                 
                 <div class="relative group">
-                    <button class="p-2 text-gray-400 hover:text-gray-600 relative transition" onclick="document.getElementById('notif-dropdown').classList.toggle('hidden')">
+                    <button class="p-2 text-gray-400 hover:text-gray-600 relative transition" onclick="toggleNotifModal()">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                         <span id="notif-badge" class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white {% if jumlah_notifikasi == 0 %}hidden{% endif %}"></span>
                     </button>
-                    
-                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
-                        <div class="sticky top-0 bg-white border-b border-gray-100 p-4 rounded-t-2xl">
-                            <h3 class="font-bold text-gray-900">Notifikasi</h3>
-                            <p class="text-xs text-gray-500 mt-1">{{ jumlah_notifikasi }} notifikasi baru</p>
-                        </div>
-                        
-                        {% if notifikasi_belum_dibaca %}
-                            {% for notif in notifikasi_belum_dibaca %}
-                            <div class="border-b border-gray-50 p-3 hover:bg-gray-50 transition cursor-pointer" onclick="markNotificationAsRead({{ notif.id }})">
-                                <p class="text-sm text-gray-800 font-medium">{{ notif.pesan|truncatewords:20 }}</p>
-                                <p class="text-xs text-gray-400 mt-1">{{ notif.tanggal_dibuat|timesince }} lalu</p>
+                </div>
+
+                <div id="notif-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div class="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden">
+                        <div class="flex items-start justify-between gap-4 p-5 border-b border-gray-100">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900">Notifikasi</h3>
+                                <p class="text-xs text-gray-500 mt-1">{{ jumlah_notifikasi }} notifikasi baru</p>
                             </div>
-                            {% endfor %}
-                            <div class="p-3 text-center border-t border-gray-100">
-                                <a href="/riwayat/" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">Lihat Semua</a>
-                            </div>
-                        {% else %}
-                        <div class="p-6 text-center text-gray-400">
-                            <p class="text-sm">Tidak ada notifikasi baru</p>
+                            <button type="button" onclick="closeNotifModal()" class="text-gray-400 hover:text-gray-600 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
                         </div>
-                        {% endif %}
+                        <div id="notif-modal-body" class="max-h-[70vh] overflow-y-auto">
+                            {% if notifikasi_belum_dibaca %}
+                                {% for notif in notifikasi_belum_dibaca %}
+                                <div class="border-b border-gray-50 p-4 hover:bg-gray-50 transition cursor-pointer" onclick="markNotificationAsRead({{ notif.id }})">
+                                    <p class="text-sm text-gray-800 font-medium">{{ notif.pesan|truncatewords:20 }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ notif.tanggal_dibuat|timesince }} lalu</p>
+                                </div>
+                                {% endfor %}
+                                <div class="p-4 text-center border-t border-gray-100">
+                                    <a href="/riwayat/" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">Lihat Semua</a>
+                                </div>
+                            {% else %}
+                            <div class="p-10 text-center text-gray-400">
+                                <p class="text-sm">Tidak ada notifikasi baru</p>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
+
+                {% if request.user.is_staff or request.user.is_superuser %}
+                <a href="/admin/" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-blue-600 rounded-full shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition" title="Dashboard Admin">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                    <span>Admin</span>
+                </a>
+                {% endif %}
 
                 <a href="/lapor/" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-full shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/></svg>
@@ -73,7 +88,7 @@
             </div>
 
             <div class="md:hidden flex items-center gap-3">
-                <button type="button" id="mobile-notif-btn" class="p-2 text-gray-400 relative" onclick="document.getElementById('notif-dropdown-mobile').classList.toggle('hidden')">
+                <button type="button" id="mobile-notif-btn" class="p-2 text-gray-400 relative" onclick="toggleNotifModal()">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                     <span id="notif-badge-mobile" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white {% if jumlah_notifikasi == 0 %}hidden{% endif %}"></span>
                 </button>
@@ -104,6 +119,10 @@
             <a href="/riwayat/" class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'riwayat' %}text-emerald-600 bg-emerald-50{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %}">Riwayat</a>
             <a href="/profil/" class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'profil' %}text-emerald-600 bg-emerald-50{% else %}text-gray-700 hover:bg-gray-50 hover:text-gray-900{% endif %}">Profil</a>
             
+            {% if request.user.is_staff or request.user.is_superuser %}
+            <a href="/admin/" class="block px-3 py-2 rounded-md text-base font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700 font-semibold">Dashboard Admin</a>
+            {% endif %}
+            
             <div class="pt-4 mt-2 border-t border-gray-100">
                 <a href="/lapor/" class="flex justify-center items-center gap-2 w-full px-4 py-2 text-sm font-bold text-white bg-emerald-600 rounded-lg shadow-md hover:bg-emerald-700">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -113,29 +132,6 @@
         </div>
     </div>
     
-    <!-- Mobile Notifikasi Dropdown -->
-    <div id="notif-dropdown-mobile" class="hidden absolute right-4 top-16 w-80 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto md:hidden">
-        <div class="sticky top-0 bg-white border-b border-gray-100 p-4 rounded-t-2xl">
-            <h3 class="font-bold text-gray-900">Notifikasi</h3>
-            <p class="text-xs text-gray-500 mt-1">{{ jumlah_notifikasi }} notifikasi baru</p>
-        </div>
-
-        {% if notifikasi_belum_dibaca %}
-            {% for notif in notifikasi_belum_dibaca %}
-            <div class="border-b border-gray-50 p-3 hover:bg-gray-50 transition cursor-pointer" onclick="markNotificationAsRead({{ notif.id }})">
-                <p class="text-sm text-gray-800 font-medium">{{ notif.pesan|truncatewords:20 }}</p>
-                <p class="text-xs text-gray-400 mt-1">{{ notif.tanggal_dibuat|timesince }} lalu</p>
-            </div>
-            {% endfor %}
-            <div class="p-3 text-center border-t border-gray-100">
-                <a href="/riwayat/" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">Lihat Semua</a>
-            </div>
-        {% else %}
-        <div class="p-6 text-center text-gray-400">
-            <p class="text-sm">Tidak ada notifikasi baru</p>
-        </div>
-        {% endif %}
-    </div>
 </nav>
 
 <script>
@@ -157,19 +153,14 @@ function markNotificationAsRead(notifId) {
     .catch(error => console.error('Error:', error));
 }
 
-// Logic untuk Menutup Dropdown Notif PC kalau klik di luar
+// Logic untuk menutup modal notifikasi kalau klik di luar
 document.addEventListener('click', function(event) {
-    const desktopDropdown = document.getElementById('notif-dropdown');
-    const desktopButton = document.querySelector('[onclick*="notif-dropdown"]');
-    const mobileDropdown = document.getElementById('notif-dropdown-mobile');
-    const mobileButton = document.getElementById('mobile-notif-btn');
+    const notifModal = document.getElementById('notif-modal');
+    const notifBtn = document.querySelector('[onclick="toggleNotifModal()"]');
+    const mobileNotifBtn = document.getElementById('mobile-notif-btn');
 
-    if (desktopDropdown && desktopButton && !desktopDropdown.contains(event.target) && !desktopButton.contains(event.target)) {
-        desktopDropdown.classList.add('hidden');
-    }
-
-    if (mobileDropdown && mobileButton && !mobileDropdown.contains(event.target) && !mobileButton.contains(event.target)) {
-        mobileDropdown.classList.add('hidden');
+    if (notifModal && !notifModal.classList.contains('hidden') && !notifModal.contains(event.target) && event.target !== notifBtn && event.target !== mobileNotifBtn) {
+        notifModal.classList.add('hidden');
     }
 });
 
@@ -195,8 +186,7 @@ function renderNotifItems(items) {
 function updateNotifUI(data) {
     const badge = document.getElementById('notif-badge');
     const badgeMobile = document.getElementById('notif-badge-mobile');
-    const desktopDropdown = document.getElementById('notif-dropdown');
-    const mobileDropdown = document.getElementById('notif-dropdown-mobile');
+    const notifModalBody = document.getElementById('notif-modal-body');
 
     if (data.jumlah_notifikasi && data.jumlah_notifikasi > 0) {
         badge && badge.classList.remove('hidden');
@@ -206,13 +196,10 @@ function updateNotifUI(data) {
         badgeMobile && badgeMobile.classList.add('hidden');
     }
 
-    // Jika dropdown terbuka, perbarui isinya
-    if (desktopDropdown && !desktopDropdown.classList.contains('hidden')) {
-        desktopDropdown.innerHTML = `<div class="sticky top-0 bg-white border-b border-gray-100 p-4 rounded-t-2xl"><h3 class="font-bold text-gray-900">Notifikasi</h3><p class="text-xs text-gray-500 mt-1">${data.jumlah_notifikasi} notifikasi baru</p></div>` + renderNotifItems(data.notifikasi);
-    }
-
-    if (mobileDropdown && !mobileDropdown.classList.contains('hidden')) {
-        mobileDropdown.innerHTML = `<div class="sticky top-0 bg-white border-b border-gray-100 p-4 rounded-t-2xl"><h3 class="font-bold text-gray-900">Notifikasi</h3><p class="text-xs text-gray-500 mt-1">${data.jumlah_notifikasi} notifikasi baru</p></div>` + renderNotifItems(data.notifikasi);
+    if (notifModalBody) {
+        notifModalBody.innerHTML = data.notifikasi && data.notifikasi.length > 0
+            ? renderNotifItems(data.notifikasi)
+            : '<div class="p-10 text-center text-gray-400"><p class="text-sm">Tidak ada notifikasi baru</p></div>';
     }
 }
 

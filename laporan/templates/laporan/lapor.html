@@ -21,6 +21,26 @@
     {% include 'includes/navbar.html' %}
     {% include 'includes/chatbot.html' %}
 
+    <div id="alert-modal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
+            <div id="alert-modal-header" class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <div>
+                    <p id="alert-modal-title" class="text-lg font-semibold text-gray-900">Pemberitahuan</p>
+                    <p id="alert-modal-subtitle" class="text-sm text-gray-500 mt-1">Informasi penting tentang laporanmu.</p>
+                </div>
+                <button type="button" onclick="closeAlertModal()" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="px-5 py-6">
+                <p id="alert-modal-message" class="text-sm leading-6 text-gray-700"></p>
+            </div>
+            <div class="px-5 pb-5">
+                <button type="button" onclick="closeAlertModal()" class="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Header & Stepper -->
     <div class="bg-gradient-to-r from-[#009465] to-[#00B27A] pt-8 pb-12 px-6 md:px-12 rounded-b-[2.5rem] shadow-sm">
         <div class="max-w-4xl mx-auto">
@@ -716,6 +736,36 @@
             }
         }
 
+        function showAlertModal(message, type = 'info') {
+            const modal = document.getElementById('alert-modal');
+            const title = document.getElementById('alert-modal-title');
+            const subtitle = document.getElementById('alert-modal-subtitle');
+            const messageEl = document.getElementById('alert-modal-message');
+
+            if (!modal || !title || !subtitle || !messageEl) return;
+
+            messageEl.textContent = message;
+            if (type === 'success') {
+                title.textContent = 'Sukses';
+                subtitle.textContent = 'Laporan Anda berhasil dikirim.';
+            } else if (type === 'error') {
+                title.textContent = 'Error';
+                subtitle.textContent = 'Perbaiki masalah berikut dan coba lagi.';
+            } else {
+                title.textContent = 'Pemberitahuan';
+                subtitle.textContent = 'Informasi penting tentang laporanmu.';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeAlertModal() {
+            const modal = document.getElementById('alert-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
         function submitLaporan() {
             function getCookie(name) {
                 let cookieValue = null;
@@ -737,23 +787,23 @@
             const locationDetail = document.getElementById('lokasi-detail').value.trim();
 
             if (!title) {
-                alert('Judul laporan tidak boleh kosong.');
+                showAlertModal('Judul laporan tidak boleh kosong.', 'error');
                 return;
             }
             if (!description) {
-                alert('Deskripsi laporan tidak boleh kosong.');
+                showAlertModal('Deskripsi laporan tidak boleh kosong.', 'error');
                 return;
             }
             if (!selectedCategory) {
-                alert('Silakan pilih kategori laporan.');
+                showAlertModal('Silakan pilih kategori laporan.', 'error');
                 return;
             }
             if (!selectedUrgensi) {
-                alert('Silakan pilih tingkat urgensi laporan.');
+                showAlertModal('Silakan pilih tingkat urgensi laporan.', 'error');
                 return;
             }
             if (!locationDetail && !selectedLocation) {
-                alert('Silakan tentukan lokasi laporan.');
+                showAlertModal('Silakan tentukan lokasi laporan.', 'error');
                 return;
             }
 
@@ -794,16 +844,18 @@
             .then(result => {
                 console.log('submitLaporan result', result);
                 if (result.ok && result.data.success) {
-                    alert('Hore! Laporan berhasil terkirim!');
-                    window.location.href = '/riwayat';
+                    showAlertModal('Hore! Laporan berhasil terkirim!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/riwayat';
+                    }, 1200);
                 } else {
                     const message = result.data && result.data.message ? result.data.message : 'Terjadi kesalahan saat mengirim laporan.';
-                    alert(`Gagal mengirim laporan: ${message}`);
+                    showAlertModal(`Gagal mengirim laporan: ${message}`, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Terjadi kesalahan saat mengirim laporan.');
+                showAlertModal('Terjadi kesalahan saat mengirim laporan.', 'error');
             })
             .finally(() => {
                 isSubmitting = false;
@@ -817,6 +869,9 @@
                 // Initialize map with Samarinda center
                 map = L.map('map').setView([-0.5021, 117.1536], 15);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+
+                // Load nearby reports and draw radius circles
+                loadNearbyReports();
 
                 // Add search functionality
                 const searchInput = document.getElementById('lokasi-detail');
@@ -835,18 +890,77 @@
 
                 // Handle map click
                 map.on('click', function(e) {
-                    if (marker) {
-                        map.removeLayer(marker);
-                    }
-                    marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
-                    selectedLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
+                    const clickLat = e.latlng.lat;
+                    const clickLng = e.latlng.lng;
+                    
+                    // Check if clicked location has nearby reports
+                    checkNearbyDuplicates(clickLat, clickLng, function(hasDuplicates) {
+                        if (hasDuplicates) {
+                            showAlertModal('Area ini sudah ada laporan serupa dalam radius 100m. Silakan pilih lokasi lain untuk menghindari duplikasi laporan.', 'info');
+                            return;
+                        }
+                        
+                        if (marker) {
+                            map.removeLayer(marker);
+                        }
+                        marker = L.marker([clickLat, clickLng]).addTo(map);
+                        selectedLocation = { lat: clickLat, lng: clickLng };
 
-                    // Reverse geocode to get address
-                    reverseGeocode(e.latlng.lat, e.latlng.lng);
+                        // Reverse geocode to get address
+                        reverseGeocode(clickLat, clickLng);
+                    });
                 });
             }
             updateStepper();
         });
+
+        // Search address using Nominatim API
+        async function loadNearbyReports() {
+            try {
+                const response = await fetch('/api/all-reports/');
+                const data = await response.json();
+                
+                if (data.success && data.reports.length > 0) {
+                    data.reports.forEach(report => {
+                        if (report.latitude == null || report.longitude == null) {
+                            return;
+                        }
+
+                        const circle = L.circle([report.latitude, report.longitude], {
+                            radius: 100, // 100 meters
+                            color: '#ef4444',
+                            fillColor: '#fecaca',
+                            fillOpacity: 0.2,
+                            weight: 2,
+                            dashArray: '5, 5'
+                        }).addTo(map);
+                        
+                        circle.bindPopup(`
+                            <div class="text-center p-2">
+                                <h4 class="font-bold text-gray-800 text-sm mb-1">${report.judul}</h4>
+                                <span class="text-xs font-bold text-red-600">Zona Laporan (100m)</span>
+                            </div>
+                        `);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading nearby reports:', error);
+            }
+        }
+
+        async function checkNearbyDuplicates(lat, lng, callback) {
+            try {
+                const response = await fetch(`/api/nearby-reports/?lat=${lat}&lng=${lng}`);
+                const data = await response.json();
+                
+                // If there are nearby reports, consider it as duplicate
+                const hasDuplicates = data.success && data.count > 0;
+                callback(hasDuplicates);
+            } catch (error) {
+                console.error('Error checking duplicates:', error);
+                callback(false);
+            }
+        }
 
         // Search address using Nominatim API
         async function searchAddress(query) {

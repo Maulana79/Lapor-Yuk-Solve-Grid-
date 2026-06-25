@@ -7,9 +7,13 @@
     <title>Beranda - LaporYuk!</title>
     <link rel="icon" href="{% static 'images/LaporYuk.svg' %}">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .leaflet-container { width: 100%; height: 100%; }
+        .custom-icon div { box-shadow: 0 2px 5px rgba(0,0,0,0.25); }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-950 antialiased">
@@ -101,21 +105,21 @@
         <div class="grid grid-cols-1 gap-6 mb-10">
             <div>
                 <h2 class="text-xl font-bold text-gray-950 mb-4">Peta Laporan</h2>
-                <div class="relative w-full h-64 rounded-2xl overflow-hidden shadow-sm group">
-                    <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=1200" alt="Map Preview" class="w-full h-full object-cover" />
-                    <div class="absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/40"></div>
-                    <div class="absolute bottom-4 left-4 right-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                        <div class="text-white">
-                            <div class="flex items-center gap-1.5 font-bold text-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#00B27A]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.75a5.25 5.25 0 0110.5 0 5.25 5.25 0 01-10.5 0zm10.5 10.5a9.75 9.75 0 11-19.5 0 9.75 9.75 0 0119.5 0z"/></svg>
-                                Laporan Sekitarmu
-                            </div>
-                            <p class="text-white/80 text-sm ml-6">12 laporan dalam radius 2 km</p>
+                <div class="relative w-full h-96 rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                    <div id="beranda-map" class="w-full h-full bg-gray-100"></div>
+                    <div class="absolute top-4 right-4 z-10 flex flex-col gap-2">
+                        <button id="beranda-zoom-in" class="bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        </button>
+                        <button id="beranda-zoom-out" class="bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                        </button>
+                    </div>
+                    <div class="absolute bottom-4 left-4 bg-white px-4 py-2.5 rounded-lg shadow-md text-sm font-semibold text-gray-700">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                            <span>Menunggu ({{ total_laporan }})</span>
                         </div>
-                        <a href="/peta/" class="inline-flex items-center gap-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors border border-white/30">
-                            Buka Peta
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                        </a>
                     </div>
                 </div>
             </div>
@@ -242,6 +246,57 @@
                 }
             });
         });
+
+        // Initialize Leaflet map for beranda
+        const laporanData = {{ laporan_json|safe }};
+        const centerPosition = [-0.5021, 117.1536]; // Samarinda coordinates
+        const berandaMap = L.map('beranda-map', { center: centerPosition, zoom: 14, zoomControl: false });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/">CartoDB</a>'
+        }).addTo(berandaMap);
+
+        const iconFactory = (color) => L.divIcon({
+            className: 'custom-icon',
+            html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white;"></div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13],
+        });
+
+        const icons = {
+            menunggu: iconFactory('#ef4444'),
+            diproses: iconFactory('#f59e0b'),
+            selesai: iconFactory('#10b981'),
+        };
+
+        laporanData.forEach((laporan) => {
+            const marker = L.marker(laporan.position, { icon: icons[laporan.statusId] }).addTo(berandaMap);
+            marker.bindPopup(`
+                <div class="text-center p-2">
+                    <h4 class="font-bold text-gray-800 text-sm mb-1">${laporan.judul}</h4>
+                    <span class="text-xs font-bold ${laporan.statusColor}">${laporan.status}</span>
+                </div>
+            `);
+            
+            // Draw 100m radius circle around marker
+            const circle = L.circle(laporan.position, {
+                radius: 100, // 100 meters
+                color: '#ef4444',
+                fillColor: '#fecaca',
+                fillOpacity: 0.15,
+                weight: 1.5,
+                dashArray: '4, 4'
+            }).addTo(berandaMap);
+            
+            circle.bindPopup(`
+                <div class="text-center p-2">
+                    <h4 class="font-bold text-gray-800 text-sm mb-1">${laporan.judul}</h4>
+                    <span class="text-xs font-bold text-red-600">Zona Laporan (100m)</span>
+                </div>
+            `);
+        });
+
+        document.getElementById('beranda-zoom-in').addEventListener('click', () => berandaMap.zoomIn());
+        document.getElementById('beranda-zoom-out').addEventListener('click', () => berandaMap.zoomOut());
     </script>
 
     <div id="global-chatbot-region">

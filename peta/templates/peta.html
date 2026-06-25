@@ -181,6 +181,24 @@
                     <span class="text-xs font-bold ${laporan.statusColor}">${laporan.status}</span>
                 </div>
             `);
+            
+            // Draw 100m radius circle around marker
+            const circle = L.circle(laporan.position, {
+                radius: 100, // 100 meters
+                color: '#ef4444',
+                fillColor: '#fecaca',
+                fillOpacity: 0.15,
+                weight: 1.5,
+                dashArray: '4, 4'
+            }).addTo(map);
+            
+            circle.bindPopup(`
+                <div class="text-center p-2">
+                    <h4 class="font-bold text-gray-800 text-sm mb-1">${laporan.judul}</h4>
+                    <span class="text-xs font-bold text-red-600">Zona Laporan (100m)</span>
+                </div>
+            `);
+            
             laporan.marker = marker;
             return marker;
         });
