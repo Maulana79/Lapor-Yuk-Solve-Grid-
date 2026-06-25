@@ -13,4 +13,6 @@ urlpatterns = [
     path('api/notifikasi/<int:notif_id>/read/', views.mark_notifikasi_read, name='mark_notifikasi_read'),
     path('api/notifikasi/status/', views.notifikasi_status, name='notifikasi_status'),
     path('api/chatbot/', views.chatbot_api, name='chatbot_api'),
+    path('api/nearby-reports/', views.nearby_reports, name='nearby_reports'),
+    path('api/all-reports/', views.all_reports, name='all_reports'),
 ]

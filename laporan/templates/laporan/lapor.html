@@ -893,10 +893,10 @@
                     const clickLat = e.latlng.lat;
                     const clickLng = e.latlng.lng;
                     
-                    // Check if clicked location has nearby reports
+                    // Check if clicked location has nearby reports with same category
                     checkNearbyDuplicates(clickLat, clickLng, function(hasDuplicates) {
                         if (hasDuplicates) {
-                            showAlertModal('Area ini sudah ada laporan serupa dalam radius 100m. Silakan pilih lokasi lain untuk menghindari duplikasi laporan.', 'info');
+                            showAlertModal('Area ini sudah ada laporan dari kategori yang sama dalam radius 100m. Silakan pilih lokasi lain atau ganti kategori laporan.', 'info');
                             return;
                         }
                         
@@ -950,10 +950,11 @@
 
         async function checkNearbyDuplicates(lat, lng, callback) {
             try {
-                const response = await fetch(`/api/nearby-reports/?lat=${lat}&lng=${lng}`);
+                const categoryParam = selectedCategory ? `&kategori=${encodeURIComponent(selectedCategory)}` : '';
+                const response = await fetch(`/api/nearby-reports/?lat=${lat}&lng=${lng}${categoryParam}`);
                 const data = await response.json();
                 
-                // If there are nearby reports, consider it as duplicate
+                // If there are nearby reports in the same category, consider it as duplicate
                 const hasDuplicates = data.success && data.count > 0;
                 callback(hasDuplicates);
             } catch (error) {

@@ -12,6 +12,7 @@ import json
 import hashlib
 import os
 import uuid
+import math
 from google import genai
 
 
@@ -57,7 +58,7 @@ def beranda_view(request):
     profile, _ = Profile.objects.get_or_create(user=user)
     profile_location = profile.location or 'Lokasi belum tersedia'
     
-# Get all laporan with support counts and default trending order
+    # Get all laporan with support counts and default trending order
     laporan_list = Pengaduan.objects.annotate(support_count=Count('dukungan'))
 
     if kategori_filter and kategori_filter != 'semua':
@@ -83,6 +84,69 @@ def beranda_view(request):
     # Kategori choices
     kategori_choices = Pengaduan.KATEGORI_CHOICES
     
+    # Transform data for map display (same format as peta_view)
+    def calculate_distance(lat1, lon1, lat2, lon2):
+        lat1_rad = math.radians(lat1)
+        lon1_rad = math.radians(lon1)
+        lat2_rad = math.radians(lat2)
+        lon2_rad = math.radians(lon2)
+        dlon = lon2_rad - lon1_rad
+        dlat = lat2_rad - lat1_rad
+        a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        return 6371 * c
+    
+    samarinda_lat = -0.5021
+    samarinda_lon = 117.1536
+    
+    laporan_map_data = []
+    for laporan in laporan_list:
+        status_mapping = {
+            'pending': {'display': 'Menunggu', 'id': 'menunggu', 'color': 'text-red-600', 'dotColor': '#ef4444'},
+            'diproses': {'display': 'Diproses', 'id': 'diproses', 'color': 'text-yellow-600', 'dotColor': '#f59e0b'},
+            'selesai': {'display': 'Selesai', 'id': 'selesai', 'color': 'text-green-600', 'dotColor': '#10b981'},
+        }
+        
+        status_info = status_mapping.get(laporan.status, status_mapping['pending'])
+        
+        latitude = laporan.latitude if laporan.latitude else -0.5021
+        longitude = laporan.longitude if laporan.longitude else 117.1536
+        
+        if not laporan.latitude or not laporan.longitude:
+            import random
+            latitude += random.uniform(-0.05, 0.05)
+            longitude += random.uniform(-0.05, 0.05)
+        
+        distance = calculate_distance(samarinda_lat, samarinda_lon, latitude, longitude)
+        
+        if distance < 1:
+            jarak_display = f"{distance*1000:.0f} m"
+        else:
+            jarak_display = f"{distance:.1f} km"
+        
+        image_url = laporan.gambar_urls[0] if laporan.gambar and len(laporan.gambar) > 0 else "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400"
+        
+        laporan_data = {
+            'id': laporan.id,
+            'status': status_info['display'],
+            'statusId': status_info['id'],
+            'statusColor': status_info['color'],
+            'dotColor': status_info['dotColor'],
+            'kategori': laporan.get_kategori_display(),
+            'waktu': f"{laporan.created_at.strftime('%d %B %Y')}",
+            'judul': laporan.judul,
+            'jarak': jarak_display,
+            'likes': 0,
+            'comments': 0,
+            'position': [latitude, longitude],
+            'image': image_url,
+            'deskripsi': laporan.deskripsi,
+            'lokasi': laporan.lokasi_detail,
+        }
+        laporan_map_data.append(laporan_data)
+    
+    laporan_json = json.dumps(laporan_map_data)
+    
     return render(request, 'laporan/beranda.html', {
         'laporan_terbaru': laporan_terbaru,
         'total_laporan': total_laporan,
@@ -94,6 +158,7 @@ def beranda_view(request):
         'profile_name': profile_name,
         'profile_location': profile_location,
         'supported_ids': supported_ids,
+        'laporan_json': laporan_json,
     })
 
 def lapor_view(request):
@@ -400,3 +465,77 @@ def chatbot_api(request):
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
             
     return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+
+def nearby_reports(request):
+    """
+    Get all reports within 100m radius of given coordinates.
+    Only return reports in the same category when kategori is provided.
+    """
+    try:
+        latitude = float(request.GET.get('lat', 0))
+        longitude = float(request.GET.get('lng', 0))
+        kategori_filter = request.GET.get('kategori', '').strip()
+        
+        if latitude == 0 or longitude == 0:
+            return JsonResponse({'success': False, 'reports': []}, status=400)
+        
+        # Convert 100 meters to approximate degrees (1 degree ≈ 111km at equator)
+        # 100m ≈ 0.0009 degrees
+        radius_degrees = 0.0009
+        
+        # Query nearby reports
+        nearby = Pengaduan.objects.filter(
+            latitude__gte=latitude - radius_degrees,
+            latitude__lte=latitude + radius_degrees,
+            longitude__gte=longitude - radius_degrees,
+            longitude__lte=longitude + radius_degrees,
+        ).exclude(latitude__isnull=True, longitude__isnull=True)
+
+        if kategori_filter:
+            nearby = nearby.filter(kategori=kategori_filter)
+        
+        reports_data = []
+        for laporan in nearby:
+            reports_data.append({
+                'id': laporan.id,
+                'judul': laporan.judul,
+                'latitude': float(laporan.latitude) if laporan.latitude else None,
+                'longitude': float(laporan.longitude) if laporan.longitude else None,
+                'status': laporan.status,
+                'kategori': laporan.kategori,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'reports': reports_data,
+            'count': len(reports_data),
+        })
+    except (ValueError, TypeError) as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+def all_reports(request):
+    """
+    Return all reports that already have latitude and longitude.
+    """
+    try:
+        nearby = Pengaduan.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+
+        reports_data = []
+        for laporan in nearby:
+            reports_data.append({
+                'id': laporan.id,
+                'judul': laporan.judul,
+                'latitude': float(laporan.latitude) if laporan.latitude else None,
+                'longitude': float(laporan.longitude) if laporan.longitude else None,
+                'status': laporan.status,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'reports': reports_data,
+            'count': len(reports_data),
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
