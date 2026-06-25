@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode, url_has_allowed_host_and_scheme
 from django.utils.encoding import force_bytes, force_str
 from django.urls import reverse
 from django.conf import settings
@@ -39,9 +39,12 @@ def register_view(request):
 
 # --- VIEW UNTUK LOGIN ---
 def login_view(request):
+    next_url = request.GET.get('next') or request.POST.get('next') or ''
+
     if request.method == 'POST':
         login_value = request.POST.get('username')
         password = request.POST.get('password')
+        admin_login = request.POST.get('admin_login') == 'on'
         username = login_value
 
         if login_value and '@' in login_value:
@@ -55,11 +58,17 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
+            if admin_login:
+                if user.is_staff or user.is_superuser:
+                    return redirect('/admin/')
+                messages.error(request, 'Akun Anda tidak memiliki akses dashboard admin.')
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+                return redirect(next_url)
             return redirect('beranda')
         else:
             messages.error(request, 'Email/NIK atau Password salah!')
 
-    return render(request, 'users/login.html')
+    return render(request, 'users/login.html', {'next': next_url})
 
 # --- VIEW UNTUK LOGOUT (Opsional tapi penting) ---
 def logout_view(request):
