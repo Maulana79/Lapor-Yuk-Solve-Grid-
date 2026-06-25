@@ -9,3 +9,4 @@ django-unfold
 google-genai
 django-storages 
 boto3
+django-allauth
