@@ -12,8 +12,29 @@ import json
 import hashlib
 import os
 import uuid
-import math
 from google import genai
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculate distance between two coordinates using Haversine formula
+    Returns distance in kilometers
+    """
+    import math
+    # Convert to radians
+    lat1_rad = math.radians(lat1)
+    lon1_rad = math.radians(lon1)
+    lat2_rad = math.radians(lat2)
+    lon2_rad = math.radians(lon2)
+
+    # Haversine formula
+    dlon = lon2_rad - lon1_rad
+    dlat = lat2_rad - lat1_rad
+    a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    distance = 6371 * c  # Earth's radius in km
+
+    return distance
 
 
 def get_client_ip(request):
@@ -84,49 +105,58 @@ def beranda_view(request):
     # Kategori choices
     kategori_choices = Pengaduan.KATEGORI_CHOICES
     
-    # Transform data for map display (same format as peta_view)
-    def calculate_distance(lat1, lon1, lat2, lon2):
-        lat1_rad = math.radians(lat1)
-        lon1_rad = math.radians(lon1)
-        lat2_rad = math.radians(lat2)
-        lon2_rad = math.radians(lon2)
-        dlon = lon2_rad - lon1_rad
-        dlat = lat2_rad - lat1_rad
-        a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-        return 6371 * c
-    
+    return render(request, 'laporan/beranda.html', {
+        'laporan_terbaru': laporan_terbaru,
+        'total_laporan': total_laporan,
+        'jumlah_diproses': jumlah_diproses,
+        'jumlah_selesai': jumlah_selesai,
+        'kategori_choices': kategori_choices,
+        'kategori_filter': kategori_filter,
+        'tingkat_kepuasan': tingkat_kepuasan,
+        'profile_name': profile_name,
+        'profile_location': profile_location,
+        'supported_ids': supported_ids,
+    })
+
+
+def peta_view(request):
+    # Fetch all laporan from database
+    laporan_list = Pengaduan.objects.all().order_by('-created_at')
+
+    # Samarinda center coordinates
     samarinda_lat = -0.5021
     samarinda_lon = 117.1536
-    
-    laporan_map_data = []
+
+    laporan_peta_data = []
     for laporan in laporan_list:
-        status_mapping = {
-            'pending': {'display': 'Menunggu', 'id': 'menunggu', 'color': 'text-red-600', 'dotColor': '#ef4444'},
-            'diproses': {'display': 'Diproses', 'id': 'diproses', 'color': 'text-yellow-600', 'dotColor': '#f59e0b'},
-            'selesai': {'display': 'Selesai', 'id': 'selesai', 'color': 'text-green-600', 'dotColor': '#10b981'},
-        }
-        
-        status_info = status_mapping.get(laporan.status, status_mapping['pending'])
-        
-        latitude = laporan.latitude if laporan.latitude else -0.5021
-        longitude = laporan.longitude if laporan.longitude else 117.1536
-        
-        if not laporan.latitude or not laporan.longitude:
-            import random
-            latitude += random.uniform(-0.05, 0.05)
-            longitude += random.uniform(-0.05, 0.05)
-        
+        try:
+            latitude = float(laporan.latitude) if laporan.latitude else None
+            longitude = float(laporan.longitude) if laporan.longitude else None
+        except ValueError:
+            continue
+
+        if not latitude or not longitude:
+            continue
+
+        # Setup status information based on mapping choice
+        status_info = {'id': 'pending', 'display': 'Menunggu', 'color': 'text-red-500 bg-red-50', 'dotColor': 'bg-red-500'}
+        if laporan.status == 'diproses':
+            status_info = {'id': 'diproses', 'display': 'Diproses', 'color': 'text-amber-500 bg-amber-50', 'dotColor': 'bg-amber-500'}
+        elif laporan.status == 'selesai':
+            status_info = {'id': 'selesai', 'display': 'Selesai', 'color': 'text-emerald-500 bg-emerald-50', 'dotColor': 'bg-emerald-500'}
+
         distance = calculate_distance(samarinda_lat, samarinda_lon, latitude, longitude)
-        
+
+        # Format distance display
         if distance < 1:
             jarak_display = f"{distance*1000:.0f} m"
         else:
             jarak_display = f"{distance:.1f} km"
-        
+
+        # Get first image or use placeholder
         image_url = laporan.gambar_urls[0] if laporan.gambar and len(laporan.gambar) > 0 else "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400"
-        
-        laporan_data = {
+
+        laporan_peta_data.append({
             'id': laporan.id,
             'status': status_info['display'],
             'statusId': status_info['id'],
@@ -142,27 +172,43 @@ def beranda_view(request):
             'image': image_url,
             'deskripsi': laporan.deskripsi,
             'lokasi': laporan.lokasi_detail,
-        }
-        laporan_map_data.append(laporan_data)
-    
-    laporan_json = json.dumps(laporan_map_data)
-    
-    return render(request, 'laporan/beranda.html', {
-        'laporan_terbaru': laporan_terbaru,
-        'total_laporan': total_laporan,
-        'jumlah_diproses': jumlah_diproses,
-        'jumlah_selesai': jumlah_selesai,
-        'kategori_choices': kategori_choices,
-        'kategori_filter': kategori_filter,
-        'tingkat_kepuasan': tingkat_kepuasan,
-        'profile_name': profile_name,
-        'profile_location': profile_location,
-        'supported_ids': supported_ids,
-        'laporan_json': laporan_json,
+        })
+
+    return render(request, 'laporan/peta.html', {
+        'laporan_data_json': json.dumps(laporan_peta_data),
+        'kategori_choices': Pengaduan.KATEGORI_CHOICES,
     })
 
+
 def lapor_view(request):
-    return render(request, 'laporan/lapor.html')
+    """
+    Halaman untuk membuat laporan baru dengan validasi data laporan aktif
+    """
+    # Mengambil semua laporan yang statusnya belum selesai (pending atau diproses)
+    laporan_aktif = Pengaduan.objects.filter(status__in=['pending', 'diproses'])
+    
+    laporan_aktif_data = []
+    for lap in laporan_aktif:
+        try:
+            lat = float(lap.latitude) if lap.latitude else None
+            lon = float(lap.longitude) if lap.longitude else None
+        except ValueError:
+            continue
+            
+        if lat and lon:
+            laporan_aktif_data.append({
+                'id': lap.id,
+                'judul': lap.judul,
+                'kategori': lap.kategori,
+                'kategori_display': lap.get_kategori_display(),
+                'latitude': lat,
+                'longitude': lon,
+            })
+
+    return render(request, 'laporan/lapor.html', {
+        'laporan_aktif_json': json.dumps(laporan_aktif_data)
+    })
+
 
 def pencarian_view(request):
     query = request.GET.get('q', '').strip()
@@ -177,6 +223,7 @@ def pencarian_view(request):
         'query': query,
         'hasil_laporan': hasil_laporan,
     })
+
 
 def semua_laporan_view(request):
     """
@@ -230,6 +277,7 @@ def semua_laporan_view(request):
         'supported_ids': supported_ids,
     })
 
+
 @login_required(login_url='/login/')
 def riwayat_view(request):
     query = request.GET.get('q', '').strip()
@@ -263,6 +311,8 @@ def riwayat_view(request):
         'status_filter': status_filter,
         'sort': sort,
     })
+
+
 @login_required(login_url='/login/')
 def beri_rating_view(request, laporan_id):
     """
@@ -288,6 +338,8 @@ def beri_rating_view(request, laporan_id):
             messages.error(request, 'Rating tidak valid.')
 
     return redirect('riwayat')
+
+
 def api_pengaduan(request):
     if request.method == 'POST':
         if not is_same_origin_request(request):
@@ -447,7 +499,7 @@ def chatbot_api(request):
             1. Kamu HANYA boleh menjawab pertanyaan seputar pelaporan masalah publik (jalan rusak, sampah, banjir, dll).
             2. Jika user bertanya di luar topik pengaduan (seperti politik, presiden, artis, harga barang, atau pengetahuan umum lainnya), kamu WAJIB menjawab: 
             'Maaf, sebagai asisten Lapor Yuk!, saya hanya diinstruksikan untuk membantu Anda terkait pengaduan masyarakat di Samarinda. Ada yang bisa saya bantu soal laporan Anda?'
-            3. JANGAN berikan informasi presiden, ekonomi, atau berita dunia meskipun kamu tahu jawabannya.
+            3. JANGAN berikan informasi presiden, economy, atau berita dunia meskipun kamu tahu jawabannya.
 
             Pertanyaan User: {pesan_user}
             """
@@ -467,89 +519,30 @@ def chatbot_api(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
 
 
-def nearby_reports(request):
+def api_laporan_aktif(request):
     """
-    Get all reports within 100m radius of given coordinates.
-    Only return reports in the same category when kategori_key or kategori is provided.
+    API untuk mengambil laporan yang belum selesai (pending atau diproses)
+    untuk ditampilkan radiusnya di halaman lapor.html
     """
-    try:
-        latitude = float(request.GET.get('lat', 0))
-        longitude = float(request.GET.get('lng', 0))
-        kategori_key_filter = request.GET.get('kategori_key', '').strip()
-        kategori_filter = request.GET.get('kategori', '').strip()
-
-        if latitude == 0 or longitude == 0:
-            return JsonResponse({'success': False, 'reports': []}, status=400)
-
-        # Normalize category from display name if necessary
-        category_mappings = {key: key for key, _ in Pengaduan.KATEGORI_CHOICES}
-        category_display_map = {display.lower(): key for key, display in Pengaduan.KATEGORI_CHOICES}
-
-        if kategori_filter and not kategori_key_filter:
-            lower_filter = kategori_filter.lower()
-            if lower_filter in category_mappings:
-                kategori_key_filter = lower_filter
-            elif lower_filter in category_display_map:
-                kategori_key_filter = category_display_map[lower_filter]
-
-        # Convert 100 meters to approximate degrees (1 degree ≈ 111km at equator)
-        # 100m ≈ 0.0009 degrees
-        radius_degrees = 0.0009
-
-        nearby = Pengaduan.objects.filter(
-            latitude__gte=latitude - radius_degrees,
-            latitude__lte=latitude + radius_degrees,
-            longitude__gte=longitude - radius_degrees,
-            longitude__lte=longitude + radius_degrees,
-        ).exclude(latitude__isnull=True, longitude__isnull=True)
-
-        if kategori_key_filter:
-            nearby = nearby.filter(kategori=kategori_key_filter)
-
-        reports_data = []
-        for laporan in nearby:
-            reports_data.append({
-                'id': laporan.id,
-                'judul': laporan.judul,
-                'latitude': float(laporan.latitude) if laporan.latitude else None,
-                'longitude': float(laporan.longitude) if laporan.longitude else None,
-                'status': laporan.status,
-                'kategori': laporan.kategori,
-                'kategori_key': laporan.kategori,
+    # Mengambil laporan yang statusnya belum 'selesai'
+    laporan_aktif = Pengaduan.objects.filter(status__in=['pending', 'diproses'])
+    
+    data = []
+    for lap in laporan_aktif:
+        try:
+            lat = float(lap.latitude) if lap.latitude else None
+            lon = float(lap.longitude) if lap.longitude else None
+        except ValueError:
+            continue
+            
+        if lat and lon:
+            data.append({
+                'id': lap.id,
+                'judul': lap.judul,
+                'kategori': lap.kategori,          # Kode value (contoh: 'jalan', 'sampah')
+                'kategori_display': lap.get_kategori_display(), # Labelnya
+                'latitude': lat,
+                'longitude': lon,
             })
-
-        return JsonResponse({
-            'success': True,
-            'reports': reports_data,
-            'count': len(reports_data),
-        })
-    except (ValueError, TypeError) as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
-
-def all_reports(request):
-    """
-    Return all reports that already have latitude and longitude.
-    """
-    try:
-        nearby = Pengaduan.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
-
-        reports_data = []
-        for laporan in nearby:
-            reports_data.append({
-                'id': laporan.id,
-                'judul': laporan.judul,
-                'latitude': float(laporan.latitude) if laporan.latitude else None,
-                'longitude': float(laporan.longitude) if laporan.longitude else None,
-                'status': laporan.status,
-                'kategori': laporan.get_kategori_display(),
-                'kategori_key': laporan.kategori,
-            })
-
-        return JsonResponse({
-            'success': True,
-            'reports': reports_data,
-            'count': len(reports_data),
-        })
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+            
+    return JsonResponse(data, safe=False)
