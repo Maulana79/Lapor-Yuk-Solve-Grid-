@@ -18,7 +18,6 @@ class Pengaduan(models.Model):
         ('rendah', 'Rendah'),
         ('sedang', 'Sedang'),
         ('tinggi', 'Tinggi'),
-        ('darurat', 'Darurat'),
     ]
 
     RATING_CHOICES = [

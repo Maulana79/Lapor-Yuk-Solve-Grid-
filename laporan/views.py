@@ -101,7 +101,46 @@ def beranda_view(request):
     # Calculate average satisfaction rating
     avg_rating = Pengaduan.objects.filter(rating__isnull=False).aggregate(Avg('rating'))['rating__avg']
     tingkat_kepuasan = round((avg_rating / 5 * 100)) if avg_rating else 0
-    
+
+    # Build data for the homepage map
+    laporan_map_queryset = Pengaduan.objects.all().order_by('-created_at')
+    if kategori_filter and kategori_filter != 'semua':
+        laporan_map_queryset = laporan_map_queryset.filter(kategori=kategori_filter)
+
+    laporan_map_data = []
+    for laporan in laporan_map_queryset:
+        try:
+            latitude = float(laporan.latitude) if laporan.latitude else None
+            longitude = float(laporan.longitude) if laporan.longitude else None
+        except (TypeError, ValueError):
+            continue
+
+        if not latitude or not longitude:
+            continue
+
+        status_mapping = {
+            'pending': {'display': 'Menunggu', 'id': 'menunggu', 'color': 'text-red-600', 'dotColor': '#ef4444'},
+            'diproses': {'display': 'Diproses', 'id': 'diproses', 'color': 'text-amber-600', 'dotColor': '#f59e0b'},
+            'selesai': {'display': 'Selesai', 'id': 'selesai', 'color': 'text-emerald-600', 'dotColor': '#10b981'},
+        }
+        status_info = status_mapping.get(laporan.status, status_mapping['pending'])
+
+        laporan_map_data.append({
+            'id': laporan.id,
+            'judul': laporan.judul,
+            'status': status_info['display'],
+            'statusId': status_info['id'],
+            'statusColor': status_info['color'],
+            'dotColor': status_info['dotColor'],
+            'kategori_key': laporan.kategori,
+            'kategori': laporan.get_kategori_display(),
+            'position': [latitude, longitude],
+            'image': laporan.gambar_urls[0] if laporan.gambar and len(laporan.gambar) > 0 else 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=400',
+            'deskripsi': laporan.deskripsi,
+            'lokasi': laporan.lokasi_detail,
+            'waktu': laporan.created_at.strftime('%d %B %Y'),
+        })
+
     # Kategori choices
     kategori_choices = Pengaduan.KATEGORI_CHOICES
     
@@ -116,6 +155,7 @@ def beranda_view(request):
         'profile_name': profile_name,
         'profile_location': profile_location,
         'supported_ids': supported_ids,
+        'laporan_json': json.dumps(laporan_map_data),
     })
 
 
@@ -354,6 +394,10 @@ def api_pengaduan(request):
             kategori = request.POST.get('kategori')
             urgensi = request.POST.get('urgensi')
             lokasi_detail = request.POST.get('lokasi_detail', '')
+
+            allowed_urgensi = {choice[0] for choice in Pengaduan.URGENSI_CHOICES}
+            if urgensi not in allowed_urgensi:
+                return JsonResponse({'success': False, 'message': 'Tingkat urgensi tidak valid'}, status=400)
             latitude = request.POST.get('latitude')
             longitude = request.POST.get('longitude')
             is_anonim = request.POST.get('is_anonim') == 'true'
