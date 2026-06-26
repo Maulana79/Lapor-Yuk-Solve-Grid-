@@ -87,11 +87,16 @@ def beranda_view(request):
 
     laporan_list = laporan_list.order_by('-support_count', '-created_at')
 
-    # Get 4 latest laporan for display
-    laporan_terbaru = laporan_list[:4]
+    # Separate laporan into active and completed
+    laporan_aktif = [l for l in laporan_list if l.status in ['pending', 'diproses']][:4]
+    laporan_selesai = [l for l in laporan_list if l.status == 'selesai'][:4]
+    
+    laporan_terbaru = laporan_list[:4]  # For backward compatibility
+    
     supported_ids = set()
     if request.user.is_authenticated:
-        supported_ids = set(Dukungan.objects.filter(user=request.user, laporan__in=laporan_terbaru).values_list('laporan_id', flat=True))
+        all_laporan_combined = list(laporan_aktif) + list(laporan_selesai)
+        supported_ids = set(Dukungan.objects.filter(user=request.user, laporan__in=all_laporan_combined).values_list('laporan_id', flat=True))
     
     # Calculate statistics
     total_laporan = Pengaduan.objects.count()
@@ -146,6 +151,8 @@ def beranda_view(request):
     
     return render(request, 'laporan/beranda.html', {
         'laporan_terbaru': laporan_terbaru,
+        'laporan_aktif': laporan_aktif,
+        'laporan_selesai': laporan_selesai,
         'total_laporan': total_laporan,
         'jumlah_diproses': jumlah_diproses,
         'jumlah_selesai': jumlah_selesai,
