@@ -1,0 +1,30 @@
+{% load static %}
+{% load unfold %}
+
+<div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 bg-white">
+    <div class="flex items-center gap-4">
+        {% if UNFOLD.SITE_ICON %}
+        <div class="flex items-center gap-3">
+            {% if UNFOLD.SITE_ICON.light %}
+            <img src="{% url_to_path UNFOLD.SITE_ICON.light %}" alt="Icon" class="h-8 w-8" />
+            {% endif %}
+            <h1 class="text-lg font-semibold text-gray-900">
+                {% if UNFOLD.SITE_HEADER %}
+                    {{ UNFOLD.SITE_HEADER }}
+                {% else %}
+                    {{ UNFOLD.SITE_TITLE }}
+                {% endif %}
+            </h1>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="flex items-center gap-2">
+        <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-emerald-700 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Kembali ke User
+        </a>
+    </div>
+</div>

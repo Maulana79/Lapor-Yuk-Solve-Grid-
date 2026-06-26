@@ -142,16 +142,17 @@
             </div>
         </div>
 
-        <div>
+        <!-- Laporan Aktif Section -->
+        <div class="mb-12">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <div class="flex items-center gap-2">
-                    <h2 class="text-xl font-bold text-gray-950">Laporan Terkini</h2>
+                    <h2 class="text-xl font-bold text-gray-950">Laporan Aktif (Menunggu & Diproses)</h2>
                     <span class="inline-flex h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
                 </div>
                 <a href="/semua-laporan/" class="text-[#00B27A] text-sm font-semibold hover:underline">Lihat semua →</a>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% for laporan in laporan_terbaru %}
+                {% for laporan in laporan_aktif %}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                     <div class="relative h-48 w-full overflow-hidden bg-gray-100">
                         {% if laporan.gambar|length > 0 %}
@@ -160,7 +161,7 @@
                         <img src="https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=600" alt="{{ laporan.judul }}" class="w-full h-full object-cover" />
                         {% endif %}
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div class="absolute top-4 left-4 px-3 py-1.5 rounded-full {% if laporan.status == 'selesai' %}bg-green-500{% elif laporan.status == 'diproses' %}bg-amber-500{% else %}bg-red-500{% endif %}/90 text-white text-xs font-bold shadow-md">{% if laporan.status == 'selesai' %}Selesai{% elif laporan.status == 'diproses' %}Diproses{% else %}Menunggu{% endif %}</div>
+                        <div class="absolute top-4 left-4 px-3 py-1.5 rounded-full {% if laporan.status == 'diproses' %}bg-amber-500{% else %}bg-red-500{% endif %}/90 text-white text-xs font-bold shadow-md">{% if laporan.status == 'diproses' %}Diproses{% else %}Menunggu{% endif %}</div>
                         <div class="absolute bottom-3 right-3 px-2 py-1 text-[11px] bg-black/50 text-white rounded font-medium">{{ laporan.created_at|timesince }} lalu</div>
                     </div>
                     <div class="p-5 flex flex-col justify-between h-full">
@@ -187,7 +188,70 @@
                                 </a>
                                 {% endif %}
                             </div>
-                            {% if laporan.status == 'selesai' and laporan.rating %}
+                        </div>
+                        <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-xs text-gray-400">Dilaporkan: {% if laporan.is_anonim %}Anonim{% else %}{{ laporan.user.first_name|default:"Pengguna" }}{% endif %}</span>
+                            <button class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 0L4.5 8m4.184 5.342L4.5 16m4.184-2.658L10 16M4.5 8l4.184-2.658m-4.184 2.658H20m-3.5 12h.01M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-2 bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
+                    <p class="text-gray-500 font-medium">Tidak ada laporan aktif untuk kategori ini</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Laporan Selesai Section -->
+        <div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-gray-950">Laporan Selesai</h2>
+                    <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                </div>
+                <a href="/semua-laporan/" class="text-[#00B27A] text-sm font-semibold hover:underline">Lihat semua →</a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for laporan in laporan_selesai %}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+                    <div class="relative h-48 w-full overflow-hidden bg-gray-100">
+                        {% if laporan.gambar|length > 0 %}
+                        <img src="{{ laporan.gambar_urls.0 }}" alt="{{ laporan.judul }}" class="w-full h-full object-cover" />
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=600" alt="{{ laporan.judul }}" class="w-full h-full object-cover" />
+                        {% endif %}
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-emerald-500/90 text-white text-xs font-bold shadow-md">Selesai</div>
+                        <div class="absolute bottom-3 right-3 px-2 py-1 text-[11px] bg-black/50 text-white rounded font-medium">{{ laporan.created_at|timesince }} lalu</div>
+                    </div>
+                    <div class="p-5 flex flex-col justify-between h-full">
+                        <div>
+                            <span class="inline-block px-2.5 py-1 bg-gray-50 text-[11px] font-semibold text-gray-600 border border-gray-200 rounded mb-3">{{ laporan.get_kategori_display }}</span>
+                            <h3 class="text-lg font-bold text-gray-950 mb-2 line-clamp-2">{{ laporan.judul }}</h3>
+                            <p class="text-sm text-gray-500 flex items-center gap-1.5 line-clamp-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                {{ laporan.lokasi_detail|default:"Lokasi tidak tersedia" }}
+                            </p>
+                            <div class="flex items-center justify-between gap-3 mt-4 mb-3">
+                                <div class="inline-flex items-center gap-2 text-sm text-gray-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.682 4.318 12.682a4.5 4.5 0 010-6.364z"/></svg>
+                                    <span class="font-semibold text-gray-900 support-count">{{ laporan.support_count|default:0 }}</span>
+                                    <span class="text-xs text-gray-500">Dukungan</span>
+                                </div>
+                                {% if user.is_authenticated %}
+                                <button type="button" class="dukungan-button inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition {% if laporan.id in supported_ids %}bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-not-allowed{% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}" data-laporan-id="{{ laporan.id }}" {% if laporan.id in supported_ids %}disabled{% endif %}>
+                                    {% if laporan.id in supported_ids %}Sudah Didukung{% else %}Dukung Laporan Ini{% endif %}
+                                </button>
+                                {% else %}
+                                <a href="/login/" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition">
+                                    Dukung Laporan Ini
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% if laporan.rating %}
                             <div class="flex items-center gap-2 mt-2">
                                 <div class="flex items-center gap-1">
                                     {% for i in "12345"|make_list %}
@@ -208,7 +272,7 @@
                 </div>
                 {% empty %}
                 <div class="col-span-2 bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
-                    <p class="text-gray-500 font-medium">Tidak ada laporan untuk kategori ini</p>
+                    <p class="text-gray-500 font-medium">Tidak ada laporan selesai untuk kategori ini</p>
                 </div>
                 {% endfor %}
             </div>

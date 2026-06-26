@@ -121,6 +121,9 @@ MIDDLEWARE = [
     
     # --- MENYELESAIKAN IMPROPERLYCONFIGURED ERROR ---
     'allauth.account.middleware.AccountMiddleware',
+    
+    # --- CUSTOM MIDDLEWARE ---
+    'config.middleware.AdminBackButtonMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
